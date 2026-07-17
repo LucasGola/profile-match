@@ -1,0 +1,11 @@
+# Normaliza quebras de linha: LF no repositório para todo texto.
+# Evita divergência CRLF/LF entre Windows e CI (Prettier usa endOfLine: lf).
+* text=auto eol=lf
+
+# Binários: nunca normalizar.
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary

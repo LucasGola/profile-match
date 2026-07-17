@@ -1,0 +1,8 @@
+dist
+node_modules
+coverage
+pnpm-lock.yaml
+package-lock.json
+
+# Documentos importados (não reformatar)
+projeto.md
