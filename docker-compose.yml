@@ -1,0 +1,43 @@
+# Infraestrutura local: Postgres (dados) e Redis (fila BullMQ + cache).
+# Os serviços de app/worker entram em milestone posterior.
+# O Compose lê variáveis do arquivo .env automaticamente (ver .env.example).
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: profilematch-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-profilematch}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-profilematch}
+      POSTGRES_DB: ${POSTGRES_DB:-profilematch}
+    ports:
+      - '${POSTGRES_PORT:-5432}:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      # Confirma que o banco aceita conexões antes de dependentes subirem.
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-profilematch} -d ${POSTGRES_DB:-profilematch}']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: profilematch-redis
+    restart: unless-stopped
+    # appendonly: persiste a fila entre restarts (evita perder jobs enfileirados).
+    command: ['redis-server', '--appendonly', 'yes']
+    ports:
+      - '${REDIS_PORT:-6379}:6379'
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+  redis_data:
