@@ -1,0 +1,49 @@
+// Schema Prisma — Profile Match.
+// Docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// Fonte de vagas (ex.: Remotive, We Work Remotely, Greenhouse).
+model Source {
+  id        String   @id @default(cuid())
+  /// Identificador estável da fonte no código (ex.: "remotive").
+  slug      String   @unique
+  name      String
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  jobs Job[]
+
+  @@map("sources")
+}
+
+/// Vaga coletada e normalizada.
+/// Campos de score/notificação/histórico entram em migrations de milestones posteriores.
+model Job {
+  id          String  @id @default(cuid())
+  title       String
+  company     String
+  url         String
+  location    String?
+  description String?
+
+  /// Hash de deduplicação (empresa + título + url). Impede reinserção da mesma vaga.
+  dedupeHash String @unique
+
+  source   Source @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  sourceId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([sourceId])
+  @@map("jobs")
+}

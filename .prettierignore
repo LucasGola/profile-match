@@ -3,6 +3,7 @@ node_modules
 coverage
 pnpm-lock.yaml
 package-lock.json
+src/generated
 
 # Documentos importados (não reformatar)
 projeto.md

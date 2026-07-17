@@ -17,7 +17,11 @@ services:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
       # Confirma que o banco aceita conexões antes de dependentes subirem.
-      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-profilematch} -d ${POSTGRES_DB:-profilematch}']
+      test:
+        [
+          'CMD-SHELL',
+          'pg_isready -U ${POSTGRES_USER:-profilematch} -d ${POSTGRES_DB:-profilematch}',
+        ]
       interval: 5s
       timeout: 5s
       retries: 5
