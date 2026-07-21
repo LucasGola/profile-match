@@ -35,5 +35,8 @@ jobs:
       - name: Checar tipos (tsc)
         run: npm run typecheck
 
+      - name: Testes unitários
+        run: npm test
+
       - name: Build
         run: npm run build
