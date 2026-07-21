@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { RemotiveSource } from './remotive.source.js';
 
 describe('RemotiveSource.normalize', () => {
@@ -41,5 +41,40 @@ describe('RemotiveSource.normalize', () => {
 
     expect(job?.location).toBeNull();
     expect(job?.description).toBeNull();
+  });
+});
+
+describe('RemotiveSource.fetch', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('busca e normaliza a resposta OK da API', async () => {
+    const payload = {
+      jobs: [
+        {
+          title: 'Backend Dev',
+          company_name: 'Acme',
+          url: 'https://remotive.com/1',
+          candidate_required_location: 'Worldwide',
+        },
+      ],
+    };
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify(payload), { status: 200 }),
+    );
+
+    const jobs = await new RemotiveSource().fetch();
+
+    expect(jobs).toHaveLength(1);
+    expect(jobs[0]).toMatchObject({ company: 'Acme', location: 'Worldwide' });
+  });
+
+  it('lança quando a API responde com erro (não-2xx)', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response('erro', { status: 500, statusText: 'Server Error' }),
+    );
+
+    await expect(new RemotiveSource().fetch()).rejects.toThrow('Remotive respondeu 500');
   });
 });

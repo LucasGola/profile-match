@@ -27,6 +27,14 @@ export default tseslint.config(
       ],
     },
   },
+  {
+    // Em testes, referenciar métodos de mocks (vi.mocked(obj.metodo)) é padrão;
+    // a regra unbound-method gera falso-positivo nesse caso.
+    files: ['**/*.test.ts'],
+    rules: {
+      '@typescript-eslint/unbound-method': 'off',
+    },
+  },
   // Deve vir por último: desliga regras de formatação que conflitam com o Prettier
   eslintConfigPrettier,
 );
