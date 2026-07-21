@@ -1,36 +1,25 @@
-import { prisma } from '../db/client.js';
-import { saveJobs, upsertSource } from '../db/job-repository.js';
 import { logger } from '../logger.js';
-import { sources } from '../sources/registry.js';
+import { collectionQueue } from '../queue/queues.js';
+import { enqueueCollection } from '../queue/producer.js';
 
 /**
- * Executa uma coleta manual de todas as fontes registradas.
+ * Dispara uma coleta: enfileira 1 job por fonte na fila de coleta.
  *
- * Cada fonte é isolada: uma que falhe não interrompe as demais. A versão
- * assíncrona com fila/workers entra no Milestone 2 — este CLI é o vertical
- * slice que prova o fluxo coleta → normalização → persistência.
+ * O processamento em si acontece no worker (`npm run worker`), que consome
+ * a fila. Este comando apenas produz os jobs e encerra.
  */
 async function main(): Promise<void> {
-  logger.info({ sources: sources.map((s) => s.slug) }, 'iniciando coleta');
-
-  for (const source of sources) {
-    const log = logger.child({ source: source.slug });
-    try {
-      const sourceId = await upsertSource(source.slug, source.name);
-      const jobs = await source.fetch();
-      const inserted = await saveJobs(sourceId, jobs);
-      log.info({ fetched: jobs.length, inserted }, 'coleta concluída');
-    } catch (err) {
-      log.error({ err }, 'falha na coleta da fonte');
-    }
-  }
+  const ids = await enqueueCollection();
+  logger.info({ jobs: ids }, 'jobs de coleta enfileirados');
 }
 
-try {
-  await main();
-} catch (err) {
-  logger.error({ err }, 'erro fatal na coleta');
-  process.exitCode = 1;
-} finally {
-  await prisma.$disconnect();
-}
+const exitCode = await main()
+  .then(() => 0)
+  .catch((err: unknown) => {
+    logger.error({ err }, 'falha ao enfileirar a coleta');
+    return 1;
+  });
+
+// close() libera a conexão; exit() garante o término (BullMQ mantém o loop vivo).
+await collectionQueue.close();
+process.exit(exitCode);

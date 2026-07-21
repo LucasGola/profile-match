@@ -8,3 +8,10 @@ import { RemotiveSource } from './remotive/remotive.source.js';
  * Nenhum outro ponto do sistema precisa ser alterado.
  */
 export const sources: JobSource[] = [new RemotiveSource()];
+
+const sourcesBySlug = new Map(sources.map((source) => [source.slug, source]));
+
+/** Resolve uma fonte pelo slug (usado pelos workers a partir do job). */
+export function getSourceBySlug(slug: string): JobSource | undefined {
+  return sourcesBySlug.get(slug);
+}
