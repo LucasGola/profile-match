@@ -36,6 +36,10 @@ export class RemotiveSource implements JobSource {
     this.timeoutMs = opts.timeoutMs ?? 10_000;
   }
 
+  // Seam de extensão: hoje é uma única requisição com timeout. Se um dia for
+  // preciso paginar (buscar N páginas) ou retentar apenas a requisição que
+  // falhou, o retry por-request (ex.: p-retry) entra AQUI — o retry externo do
+  // job (BullMQ) continua como rede de segurança. Ver src/queue/job-options.ts.
   async fetch(): Promise<NormalizedJob[]> {
     const url = `${REMOTIVE_API_URL}?limit=${String(this.limit)}`;
 

@@ -1,5 +1,6 @@
 import { Queue } from 'bullmq';
 import { createRedisConnection } from './connection.js';
+import { COLLECTION_JOB_OPTIONS } from './job-options.js';
 
 /** Nome da fila de coleta (1 job por fonte). */
 export const COLLECTION_QUEUE = 'collection';
@@ -15,4 +16,5 @@ export interface CollectionJobData {
  */
 export const collectionQueue = new Queue<CollectionJobData>(COLLECTION_QUEUE, {
   connection: createRedisConnection(),
+  defaultJobOptions: COLLECTION_JOB_OPTIONS,
 });
