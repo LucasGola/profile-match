@@ -1,5 +1,7 @@
-import { execSync } from 'node:child_process';
+import { readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { PostgreSqlContainer, type StartedPostgreSqlContainer } from '@testcontainers/postgresql';
+import pg from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { NormalizedJob } from '../pipeline/job.schema.js';
 
@@ -8,17 +10,37 @@ let container: StartedPostgreSqlContainer;
 let repo: typeof import('./job-repository.js');
 let db: typeof import('./client.js');
 
+/**
+ * Aplica as migrations versionadas (prisma/migrations) diretamente via pg.
+ *
+ * Executa o SQL que de fato versionamos — mais fiel que `prisma db push`
+ * (que sincroniza a partir do schema, ignorando o histórico) — e sem
+ * invocar o CLI do Prisma.
+ */
+async function applyMigrations(connectionUri: string): Promise<void> {
+  const migrationsDir = join(process.cwd(), 'prisma', 'migrations');
+  const migrations = readdirSync(migrationsDir)
+    .filter((entry) => /^\d/.test(entry)) // pastas de migration (timestamp); ignora migration_lock.toml
+    .sort();
+
+  const client = new pg.Client({ connectionString: connectionUri });
+  await client.connect();
+  try {
+    for (const migration of migrations) {
+      const sql = readFileSync(join(migrationsDir, migration, 'migration.sql'), 'utf8');
+      await client.query(sql);
+    }
+  } finally {
+    await client.end();
+  }
+}
+
 beforeAll(async () => {
   container = await new PostgreSqlContainer('postgres:17-alpine').start();
   const connectionUri = container.getConnectionUri();
   process.env['DATABASE_URL'] = connectionUri;
 
-  // Aplica o schema no banco efêmero. --url sobrescreve a datasource
-  // diretamente (mais robusto que depender do env/dotenv).
-  execSync(`npx prisma db push --url "${connectionUri}" --accept-data-loss`, {
-    stdio: 'inherit',
-    env: process.env,
-  });
+  await applyMigrations(connectionUri);
 
   repo = await import('./job-repository.js');
   db = await import('./client.js');
