@@ -40,3 +40,24 @@ jobs:
 
       - name: Build
         run: npm run build
+
+  integration:
+    name: Testes de integração
+    runs-on: ubuntu-latest
+    # Job separado: roda em paralelo ao quality (não soma no tempo total de parede).
+    # Usa Testcontainers (Postgres + Redis); o runner do GitHub já tem Docker.
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Testes de integração (Testcontainers)
+        run: npm run test:integration
