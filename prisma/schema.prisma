@@ -26,7 +26,7 @@ model Source {
 }
 
 /// Vaga coletada e normalizada.
-/// Campos de score/notificação/histórico entram em migrations de milestones posteriores.
+/// Campos de score/notificação entram em migrations de milestones posteriores.
 model Job {
   id          String  @id @default(cuid())
   title       String
@@ -37,6 +37,10 @@ model Job {
 
   /// Hash de deduplicação (empresa + título + url). Impede reinserção da mesma vaga.
   dedupeHash String @unique
+
+  /// Histórico: quando a vaga foi vista pela primeira e pela última vez numa coleta.
+  firstSeenAt DateTime @default(now())
+  lastSeenAt  DateTime @default(now())
 
   source   Source @relation(fields: [sourceId], references: [id], onDelete: Cascade)
   sourceId String
