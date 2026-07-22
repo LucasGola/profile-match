@@ -34,4 +34,16 @@ describe('enqueueCollection', () => {
     expect(mockAdd).toHaveBeenCalledWith('collect', { sourceSlug: 'wwr' });
     expect(ids).toEqual(['job-remotive', 'job-wwr']);
   });
+
+  it('isola falha de enfileiramento: uma fonte que falha não impede as outras', async () => {
+    mockAdd
+      .mockRejectedValueOnce(new Error('redis indisponível')) // remotive falha
+      .mockResolvedValueOnce({ id: 'job-wwr' } as unknown as AddResult); // wwr ok
+
+    const ids = await enqueueCollection();
+
+    // Ambas foram tentadas; só a bem-sucedida retorna.
+    expect(mockAdd).toHaveBeenCalledTimes(2);
+    expect(ids).toEqual(['job-wwr']);
+  });
 });
