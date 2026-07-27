@@ -57,8 +57,10 @@ npm run worker
 npm run collect
 ```
 
-A coleta é assíncrona: `collect` apenas enfileira 1 job por fonte na fila
-(BullMQ/Redis); o `worker` consome os jobs e persiste as vagas.
+A coleta é assíncrona: o `worker` consome a fila (BullMQ/Redis), persiste as
+vagas e **agenda a coleta periódica** automaticamente (intervalo em
+`COLLECT_INTERVAL_MS`, padrão 30 min). O `collect` é opcional — dispara uma
+coleta sob demanda enfileirando 1 job por fonte.
 
 ### Scripts úteis
 

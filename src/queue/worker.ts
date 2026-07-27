@@ -4,6 +4,7 @@ import { logger } from '../logger.js';
 import { processCollectionJob } from './collection.processor.js';
 import { createRedisConnection } from './connection.js';
 import { COLLECTION_QUEUE, type CollectionJobData } from './queues.js';
+import { getCollectionIntervalMs, registerCollectionSchedulers } from './scheduler.js';
 
 const CONCURRENCY = Number(process.env['WORKER_CONCURRENCY'] ?? '3');
 
@@ -21,6 +22,15 @@ worker.on('error', (err) => {
 });
 
 logger.info({ queue: COLLECTION_QUEUE, concurrency: CONCURRENCY }, 'worker de coleta iniciado');
+
+// Registra os agendamentos periódicos (idempotente) ao subir o worker.
+registerCollectionSchedulers()
+  .then(() => {
+    logger.info({ intervalMs: getCollectionIntervalMs() }, 'agendamento de coleta registrado');
+  })
+  .catch((err: unknown) => {
+    logger.error({ err }, 'falha ao registrar agendamento de coleta');
+  });
 
 // Encerramento gracioso: fecha o worker e a conexão do banco.
 async function shutdown(signal: string): Promise<void> {
