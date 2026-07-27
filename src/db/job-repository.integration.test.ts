@@ -69,18 +69,34 @@ describe('persistência de vagas (integração)', () => {
     },
   ];
 
-  it('persiste vagas novas e ignora duplicatas entre coletas', async () => {
+  it('insere vagas novas e, ao revê-las, atualiza lastSeenAt sem duplicar', async () => {
     const sourceId = await repo.upsertSource('remotive', 'Remotive');
 
-    const inserted = await repo.saveJobs(sourceId, sample);
-    expect(inserted).toBe(2);
+    const first = await repo.saveJobs(sourceId, sample);
+    expect(first).toEqual({ inserted: 2, updated: 0 });
 
-    // Uma segunda coleta idêntica não deve inserir nada (dedup por hash).
-    const reinserted = await repo.saveJobs(sourceId, sample);
-    expect(reinserted).toBe(0);
+    const afterFirst = await db.prisma.job.findFirstOrThrow({
+      where: { url: 'https://x.com/1' },
+    });
 
-    const total = await db.prisma.job.count();
-    expect(total).toBe(2);
+    // Espaço para o timestamp avançar de forma perceptível (precisão de ms).
+    await new Promise<void>((resolve) => {
+      setTimeout(resolve, 50);
+    });
+
+    // Segunda coleta idêntica: nada novo, tudo revisto.
+    const second = await repo.saveJobs(sourceId, sample);
+    expect(second).toEqual({ inserted: 0, updated: 2 });
+
+    // Não duplicou.
+    expect(await db.prisma.job.count()).toBe(2);
+
+    const afterSecond = await db.prisma.job.findFirstOrThrow({
+      where: { url: 'https://x.com/1' },
+    });
+    // firstSeenAt permanece; lastSeenAt avança.
+    expect(afterSecond.firstSeenAt.getTime()).toBe(afterFirst.firstSeenAt.getTime());
+    expect(afterSecond.lastSeenAt.getTime()).toBeGreaterThan(afterFirst.lastSeenAt.getTime());
   });
 
   it('upsertSource é idempotente (mesmo slug retorna o mesmo id)', async () => {

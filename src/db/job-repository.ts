@@ -15,29 +15,62 @@ export async function upsertSource(slug: string, name: string): Promise<string> 
   return source.id;
 }
 
-/**
- * Persiste as vagas de uma fonte, ignorando duplicatas.
- *
- * - Deduplica dentro do próprio lote por `dedupeHash` (evita conflito na
- *   mesma instrução de insert).
- * - `skipDuplicates` ignora vagas já presentes no banco (constraint única).
- *
- * A semântica de histórico (first_seen/last_seen) entra no Milestone 3.
- *
- * @returns quantidade de vagas efetivamente inseridas.
- */
-export async function saveJobs(sourceId: string, jobs: NormalizedJob[]): Promise<number> {
-  if (jobs.length === 0) return 0;
+export interface SaveJobsResult {
+  /** Vagas inéditas inseridas nesta coleta. */
+  inserted: number;
+  /** Vagas já conhecidas cujo lastSeenAt foi atualizado. */
+  updated: number;
+}
 
-  const seen = new Set<string>();
-  const data = [];
+/**
+ * Persiste as vagas de uma fonte com semântica de histórico (upsert).
+ *
+ * - Deduplica dentro do próprio lote por `dedupeHash`.
+ * - Vaga inédita → inserida (firstSeenAt/lastSeenAt recebem o default now()).
+ * - Vaga já conhecida → apenas o `lastSeenAt` é atualizado (firstSeenAt
+ *   permanece), registrando que ela ainda está ativa.
+ *
+ * Usa consulta em lote (findMany → createMany + updateMany) em vez de N upserts
+ * individuais: menos round-trips e contagens exatas de inserção/atualização.
+ */
+export async function saveJobs(sourceId: string, jobs: NormalizedJob[]): Promise<SaveJobsResult> {
+  if (jobs.length === 0) return { inserted: 0, updated: 0 };
+
+  // Deduplica o lote por hash.
+  const byHash = new Map<string, NormalizedJob & { dedupeHash: string }>();
   for (const job of jobs) {
     const dedupeHash = computeDedupeHash(job);
-    if (seen.has(dedupeHash)) continue;
-    seen.add(dedupeHash);
-    data.push({ ...job, sourceId, dedupeHash });
+    if (!byHash.has(dedupeHash)) {
+      byHash.set(dedupeHash, { ...job, dedupeHash });
+    }
   }
 
-  const result = await prisma.job.createMany({ data, skipDuplicates: true });
-  return result.count;
+  // Quais desses hashes já existem no banco?
+  const existing = await prisma.job.findMany({
+    where: { dedupeHash: { in: [...byHash.keys()] } },
+    select: { dedupeHash: true },
+  });
+  const existingHashes = new Set(existing.map((row) => row.dedupeHash));
+
+  const toCreate = [...byHash.values()]
+    .filter((job) => !existingHashes.has(job.dedupeHash))
+    .map((job) => ({ ...job, sourceId }));
+
+  let inserted = 0;
+  if (toCreate.length > 0) {
+    // skipDuplicates protege contra corrida entre o findMany e o insert.
+    const created = await prisma.job.createMany({ data: toCreate, skipDuplicates: true });
+    inserted = created.count;
+  }
+
+  let updated = 0;
+  if (existingHashes.size > 0) {
+    const bumped = await prisma.job.updateMany({
+      where: { dedupeHash: { in: [...existingHashes] } },
+      data: { lastSeenAt: new Date() },
+    });
+    updated = bumped.count;
+  }
+
+  return { inserted, updated };
 }

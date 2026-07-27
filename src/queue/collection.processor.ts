@@ -7,6 +7,7 @@ import type { CollectionJobData } from './queues.js';
 export interface CollectionResult {
   fetched: number;
   inserted: number;
+  updated: number;
 }
 
 /**
@@ -28,8 +29,8 @@ export async function processCollectionJob(job: Job<CollectionJobData>): Promise
 
   const sourceId = await upsertSource(source.slug, source.name);
   const jobs = await source.fetch();
-  const inserted = await saveJobs(sourceId, jobs);
+  const { inserted, updated } = await saveJobs(sourceId, jobs);
 
-  log.info({ fetched: jobs.length, inserted }, 'coleta concluída');
-  return { fetched: jobs.length, inserted };
+  log.info({ fetched: jobs.length, inserted, updated }, 'coleta concluída');
+  return { fetched: jobs.length, inserted, updated };
 }

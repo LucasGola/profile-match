@@ -39,11 +39,11 @@ describe('processCollectionJob', () => {
     const fakeSource: JobSource = { slug: 'remotive', name: 'Remotive', fetch: fetchMock };
     mockGetSourceBySlug.mockReturnValue(fakeSource);
     mockUpsertSource.mockResolvedValue('source-id');
-    mockSaveJobs.mockResolvedValue(2);
+    mockSaveJobs.mockResolvedValue({ inserted: 2, updated: 0 });
 
     const result = await processCollectionJob(makeJob('remotive'));
 
-    expect(result).toEqual({ fetched: 2, inserted: 2 });
+    expect(result).toEqual({ fetched: 2, inserted: 2, updated: 0 });
     expect(mockUpsertSource).toHaveBeenCalledWith('remotive', 'Remotive');
     expect(fetchMock).toHaveBeenCalledOnce();
     expect(mockSaveJobs).toHaveBeenCalledWith('source-id', sampleJobs);
