@@ -13,9 +13,10 @@ matching explicável (sem ML), API cacheada, testes, CI/CD e deploy.
 > 🚧 **Em desenvolvimento ativo.** Já concluído: fundação (Milestone 0), slice
 > vertical de coleta (Milestone 1), coleta assíncrona/concorrente com fila e
 > workers a partir de 3 fontes (Milestone 2 — Remotive, We Work Remotely e
-> Greenhouse), deduplicação com histórico de vagas (Milestone 3) e agendamento
-> automático da coleta (Milestone 4). As demais funcionalidades seguem em
-> construção incremental.
+> Greenhouse), deduplicação com histórico de vagas (Milestone 3), agendamento
+> automático da coleta (Milestone 4) e matching explicável por perfil, com score
+> e breakdown (Milestone 5). As demais funcionalidades seguem em construção
+> incremental.
 
 ## Stack
 
@@ -26,7 +27,7 @@ matching explicável (sem ML), API cacheada, testes, CI/CD e deploy.
 | Fila / workers  | BullMQ + Redis                  |
 | Fontes          | Remotive, WWR (RSS), Greenhouse |
 | Banco de dados  | PostgreSQL + Prisma             |
-| Matching        | Regras + fuse.js _(planejado)_  |
+| Matching        | Regras + fuse.js                |
 | Notificação     | Telegram / e-mail _(planejado)_ |
 | Logs            | pino                            |
 | Testes          | Vitest + Testcontainers         |
@@ -45,16 +46,19 @@ npm install
 # 2. Configurar variáveis de ambiente
 cp .env.example .env
 
-# 3. Subir Postgres e Redis
+# 3. Configurar seu perfil de busca (stack, senioridade, keywords, remoto)
+cp profile.example.json profile.json
+
+# 4. Subir Postgres e Redis
 npm run docker:up
 
-# 4. Aplicar as migrations do banco
+# 5. Aplicar as migrations do banco
 npm run db:migrate
 
-# 5. Em um terminal: iniciar o worker (consome a fila e persiste)
+# 6. Em um terminal: iniciar o worker (consome a fila e persiste)
 npm run worker
 
-# 6. Em outro terminal: disparar uma coleta (enfileira 1 job por fonte)
+# 7. Em outro terminal: disparar uma coleta (enfileira 1 job por fonte)
 npm run collect
 ```
 
