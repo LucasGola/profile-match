@@ -36,6 +36,12 @@ export interface ScoreResult {
   breakdown: BreakdownItem[];
 }
 
+/** Vaga normalizada já com score e breakdown, pronta para persistir. */
+export interface ScoredJob extends NormalizedJob {
+  score: number;
+  scoreBreakdown: BreakdownItem[];
+}
+
 /** Divide o texto em tokens, preservando símbolos comuns de tech (+, #, .). */
 function tokenize(text: string): string[] {
   return text

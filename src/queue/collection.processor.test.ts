@@ -12,6 +12,12 @@ vi.mock('../db/job-repository.js', () => ({
 vi.mock('../sources/registry.js', () => ({
   getSourceBySlug: vi.fn(),
 }));
+vi.mock('../scoring/profile.js', () => ({
+  loadProfile: vi.fn(() => ({ stack: [], seniority: null, keywords: [], remote: true })),
+}));
+vi.mock('../scoring/scorer.js', () => ({
+  scoreJob: vi.fn(() => ({ score: 42, breakdown: [] })),
+}));
 
 import { recordSourceRun, saveJobs, upsertSource } from '../db/job-repository.js';
 import { getSourceBySlug } from '../sources/registry.js';
@@ -48,7 +54,13 @@ describe('processCollectionJob', () => {
     expect(result).toEqual({ fetched: 2, inserted: 2, updated: 0 });
     expect(mockUpsertSource).toHaveBeenCalledWith('remotive', 'Remotive');
     expect(fetchMock).toHaveBeenCalledOnce();
-    expect(mockSaveJobs).toHaveBeenCalledWith('source-id', sampleJobs);
+
+    // saveJobs recebe as vagas já pontuadas (score do mock do scorer).
+    const [savedSourceId, savedJobs] = mockSaveJobs.mock.calls[0] ?? [];
+    expect(savedSourceId).toBe('source-id');
+    expect(savedJobs).toHaveLength(2);
+    expect(savedJobs?.every((job) => job.score === 42)).toBe(true);
+
     expect(mockRecordSourceRun).toHaveBeenCalledWith('source-id', {
       status: 'success',
       durationMs: expect.any(Number) as number,

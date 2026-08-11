@@ -1,5 +1,6 @@
 import { computeDedupeHash } from '../pipeline/dedupe.js';
-import type { NormalizedJob } from '../pipeline/job.schema.js';
+import type { ScoredJob } from '../scoring/scorer.js';
+import type { Prisma } from '../generated/prisma/client.js';
 import { prisma } from './client.js';
 
 /**
@@ -50,15 +51,15 @@ export interface SaveJobsResult {
  * Usa consulta em lote (findMany → createMany + updateMany) em vez de N upserts
  * individuais: menos round-trips e contagens exatas de inserção/atualização.
  */
-export async function saveJobs(sourceId: string, jobs: NormalizedJob[]): Promise<SaveJobsResult> {
+export async function saveJobs(sourceId: string, jobs: ScoredJob[]): Promise<SaveJobsResult> {
   if (jobs.length === 0) return { inserted: 0, updated: 0 };
 
   // Deduplica o lote por hash.
-  const byHash = new Map<string, NormalizedJob & { dedupeHash: string }>();
+  const byHash = new Map<string, ScoredJob>();
   for (const job of jobs) {
     const dedupeHash = computeDedupeHash(job);
     if (!byHash.has(dedupeHash)) {
-      byHash.set(dedupeHash, { ...job, dedupeHash });
+      byHash.set(dedupeHash, job);
     }
   }
 
@@ -69,9 +70,20 @@ export async function saveJobs(sourceId: string, jobs: NormalizedJob[]): Promise
   });
   const existingHashes = new Set(existing.map((row) => row.dedupeHash));
 
-  const toCreate = [...byHash.values()]
-    .filter((job) => !existingHashes.has(job.dedupeHash))
-    .map((job) => ({ ...job, sourceId }));
+  const toCreate: Prisma.JobCreateManyInput[] = [...byHash.entries()]
+    .filter(([dedupeHash]) => !existingHashes.has(dedupeHash))
+    .map(([dedupeHash, job]) => ({
+      title: job.title,
+      company: job.company,
+      url: job.url,
+      location: job.location,
+      description: job.description,
+      dedupeHash,
+      sourceId,
+      score: job.score,
+      // Breakdown tipado → Json do Prisma (cast padrão para campos Json).
+      scoreBreakdown: job.scoreBreakdown as unknown as Prisma.InputJsonValue,
+    }));
 
   let inserted = 0;
   if (toCreate.length > 0) {

@@ -37,7 +37,7 @@ model Source {
 }
 
 /// Vaga coletada e normalizada.
-/// Campos de score/notificação entram em migrations de milestones posteriores.
+/// Campos de notificação entram em migration de milestone posterior.
 model Job {
   id          String  @id @default(cuid())
   title       String
@@ -52,6 +52,10 @@ model Job {
   /// Histórico: quando a vaga foi vista pela primeira e pela última vez numa coleta.
   firstSeenAt DateTime @default(now())
   lastSeenAt  DateTime @default(now())
+
+  /// Aderência ao perfil (0..100) e o detalhamento por critério (breakdown).
+  score          Int?
+  scoreBreakdown Json?
 
   source   Source @relation(fields: [sourceId], references: [id], onDelete: Cascade)
   sourceId String

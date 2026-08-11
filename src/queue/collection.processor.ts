@@ -1,8 +1,13 @@
 import type { Job } from 'bullmq';
 import { recordSourceRun, saveJobs, upsertSource } from '../db/job-repository.js';
 import { logger } from '../logger.js';
+import { loadProfile } from '../scoring/profile.js';
+import { scoreJob, type ScoredJob } from '../scoring/scorer.js';
 import { getSourceBySlug } from '../sources/registry.js';
 import type { CollectionJobData } from './queues.js';
+
+// Perfil de busca carregado uma vez ao subir o worker.
+const profile = loadProfile();
 
 export interface CollectionResult {
   fetched: number;
@@ -32,7 +37,11 @@ export async function processCollectionJob(job: Job<CollectionJobData>): Promise
 
   try {
     const jobs = await source.fetch();
-    const { inserted, updated } = await saveJobs(sourceId, jobs);
+    const scored: ScoredJob[] = jobs.map((job) => {
+      const { score, breakdown } = scoreJob(job, profile);
+      return { ...job, score, scoreBreakdown: breakdown };
+    });
+    const { inserted, updated } = await saveJobs(sourceId, scored);
 
     await recordSourceRun(sourceId, { status: 'success', durationMs: Date.now() - startedAt });
     log.info({ fetched: jobs.length, inserted, updated }, 'coleta concluída');

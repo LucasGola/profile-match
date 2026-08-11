@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { PostgreSqlContainer, type StartedPostgreSqlContainer } from '@testcontainers/postgresql';
 import pg from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import type { NormalizedJob } from '../pipeline/job.schema.js';
+import type { ScoredJob } from '../scoring/scorer.js';
 
 let container: StartedPostgreSqlContainer;
 // Importados dinamicamente após DATABASE_URL apontar para o container.
@@ -52,13 +52,15 @@ afterAll(async () => {
 });
 
 describe('persistência de vagas (integração)', () => {
-  const sample: NormalizedJob[] = [
+  const sample: ScoredJob[] = [
     {
       title: 'Backend Dev',
       company: 'Acme',
       url: 'https://x.com/1',
       location: null,
       description: null,
+      score: 87,
+      scoreBreakdown: [{ criterion: 'stack', score: 1, weight: 5, contribution: 5, detail: '3/3' }],
     },
     {
       title: 'SRE',
@@ -66,6 +68,8 @@ describe('persistência de vagas (integração)', () => {
       url: 'https://x.com/2',
       location: 'Remote',
       description: null,
+      score: 40,
+      scoreBreakdown: [],
     },
   ];
 
@@ -78,6 +82,9 @@ describe('persistência de vagas (integração)', () => {
     const afterFirst = await db.prisma.job.findFirstOrThrow({
       where: { url: 'https://x.com/1' },
     });
+    // Score e breakdown são persistidos no insert.
+    expect(afterFirst.score).toBe(87);
+    expect(afterFirst.scoreBreakdown).toEqual(sample[0]?.scoreBreakdown);
 
     // Espaço para o timestamp avançar de forma perceptível (precisão de ms).
     await new Promise<void>((resolve) => {
