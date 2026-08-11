@@ -13,8 +13,9 @@ matching explicável (sem ML), API cacheada, testes, CI/CD e deploy.
 > 🚧 **Em desenvolvimento ativo.** Já concluído: fundação (Milestone 0), slice
 > vertical de coleta (Milestone 1), coleta assíncrona/concorrente com fila e
 > workers a partir de 3 fontes (Milestone 2 — Remotive, We Work Remotely e
-> Greenhouse) e deduplicação com histórico de vagas (Milestone 3). As demais
-> funcionalidades seguem em construção incremental.
+> Greenhouse), deduplicação com histórico de vagas (Milestone 3) e agendamento
+> automático da coleta (Milestone 4). As demais funcionalidades seguem em
+> construção incremental.
 
 ## Stack
 
