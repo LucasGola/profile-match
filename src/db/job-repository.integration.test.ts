@@ -107,4 +107,15 @@ describe('persistência de vagas (integração)', () => {
     const count = await db.prisma.source.count();
     expect(count).toBe(1);
   });
+
+  it('recordSourceRun grava status e duração da última coleta', async () => {
+    const sourceId = await repo.upsertSource('greenhouse', 'Greenhouse');
+
+    await repo.recordSourceRun(sourceId, { status: 'success', durationMs: 1234 });
+
+    const source = await db.prisma.source.findUniqueOrThrow({ where: { id: sourceId } });
+    expect(source.lastRunStatus).toBe('success');
+    expect(source.lastRunDurationMs).toBe(1234);
+    expect(source.lastRunAt).not.toBeNull();
+  });
 });

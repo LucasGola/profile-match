@@ -1,5 +1,5 @@
 import type { Job } from 'bullmq';
-import { saveJobs, upsertSource } from '../db/job-repository.js';
+import { recordSourceRun, saveJobs, upsertSource } from '../db/job-repository.js';
 import { logger } from '../logger.js';
 import { getSourceBySlug } from '../sources/registry.js';
 import type { CollectionJobData } from './queues.js';
@@ -28,9 +28,17 @@ export async function processCollectionJob(job: Job<CollectionJobData>): Promise
   const log = logger.child({ source: source.slug, jobId: job.id });
 
   const sourceId = await upsertSource(source.slug, source.name);
-  const jobs = await source.fetch();
-  const { inserted, updated } = await saveJobs(sourceId, jobs);
+  const startedAt = Date.now();
 
-  log.info({ fetched: jobs.length, inserted, updated }, 'coleta concluída');
-  return { fetched: jobs.length, inserted, updated };
+  try {
+    const jobs = await source.fetch();
+    const { inserted, updated } = await saveJobs(sourceId, jobs);
+
+    await recordSourceRun(sourceId, { status: 'success', durationMs: Date.now() - startedAt });
+    log.info({ fetched: jobs.length, inserted, updated }, 'coleta concluída');
+    return { fetched: jobs.length, inserted, updated };
+  } catch (err) {
+    await recordSourceRun(sourceId, { status: 'error', durationMs: Date.now() - startedAt });
+    throw err;
+  }
 }

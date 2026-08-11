@@ -15,6 +15,23 @@ export async function upsertSource(slug: string, name: string): Promise<string> 
   return source.id;
 }
 
+export interface SourceRun {
+  status: 'success' | 'error';
+  durationMs: number;
+}
+
+/** Registra o resultado da última coleta de uma fonte (status + duração). */
+export async function recordSourceRun(sourceId: string, run: SourceRun): Promise<void> {
+  await prisma.source.update({
+    where: { id: sourceId },
+    data: {
+      lastRunAt: new Date(),
+      lastRunStatus: run.status,
+      lastRunDurationMs: run.durationMs,
+    },
+  });
+}
+
 export interface SaveJobsResult {
   /** Vagas inéditas inseridas nesta coleta. */
   inserted: number;

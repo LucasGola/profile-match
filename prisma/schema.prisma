@@ -10,6 +10,12 @@ datasource db {
   provider = "postgresql"
 }
 
+/// Resultado da última coleta de uma fonte.
+enum SourceRunStatus {
+  success
+  error
+}
+
 /// Fonte de vagas (ex.: Remotive, We Work Remotely, Greenhouse).
 model Source {
   id        String   @id @default(cuid())
@@ -19,6 +25,11 @@ model Source {
   enabled   Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  /// Status/duração da última coleta (null até a primeira execução).
+  lastRunAt         DateTime?
+  lastRunStatus     SourceRunStatus?
+  lastRunDurationMs Int?
 
   jobs Job[]
 
