@@ -53,6 +53,7 @@
     "@prisma/adapter-pg": "^7.9.0",
     "@prisma/client": "^7.9.0",
     "bullmq": "^5.80.10",
+    "fuse.js": "^7.5.0",
     "ioredis": "^5.11.1",
     "pg": "^8.22.0",
     "pino": "^10.3.1",
