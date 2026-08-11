@@ -1,0 +1,6 @@
+{
+  "stack": ["typescript", "node", "postgres", "fastify"],
+  "seniority": "senior",
+  "keywords": ["backend", "api", "sql"],
+  "remote": true
+}

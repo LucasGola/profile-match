@@ -73,6 +73,9 @@ web_modules/
 # Prisma Client gerado (regenerado via `prisma generate` / postinstall)
 src/generated/
 
+# Perfil pessoal de busca (use profile.example.json como template)
+profile.json
+
 # parcel-bundler cache (https://parceljs.org/)
 .cache
 .parcel-cache
