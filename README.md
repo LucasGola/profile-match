@@ -23,7 +23,7 @@ matching explicável (sem ML), API cacheada, testes, CI/CD e deploy.
 | Camada          | Tecnologia                      |
 | --------------- | ------------------------------- |
 | Runtime         | Node.js 22 (LTS) + TypeScript   |
-| API HTTP        | Fastify _(planejado)_           |
+| API HTTP        | Fastify (+ Swagger)             |
 | Fila / workers  | BullMQ + Redis                  |
 | Fontes          | Remotive, WWR (RSS), Greenhouse |
 | Banco de dados  | PostgreSQL + Prisma             |
