@@ -103,3 +103,54 @@ export async function saveJobs(sourceId: string, jobs: ScoredJob[]): Promise<Sav
 
   return { inserted, updated };
 }
+
+export interface JobFilters {
+  /** Score mínimo (0..100). */
+  minScore?: number;
+  /** Slug da fonte (ex.: "remotive"). */
+  source?: string;
+  /** Vagas vistas pela primeira vez a partir desta data. */
+  since?: Date;
+  /** Termo buscado no título/descrição (case-insensitive). */
+  stack?: string;
+}
+
+export interface Pagination {
+  page: number;
+  pageSize: number;
+}
+
+/**
+ * Lista vagas com filtros e paginação, ordenadas por score (desc, nulls por
+ * último) e depois por lastSeenAt.
+ */
+export async function findJobs(filters: JobFilters, pagination: Pagination) {
+  const where: Prisma.JobWhereInput = {};
+  if (filters.minScore !== undefined) where.score = { gte: filters.minScore };
+  if (filters.source !== undefined) where.source = { slug: filters.source };
+  if (filters.since !== undefined) where.firstSeenAt = { gte: filters.since };
+  if (filters.stack !== undefined) {
+    where.OR = [
+      { title: { contains: filters.stack, mode: 'insensitive' } },
+      { description: { contains: filters.stack, mode: 'insensitive' } },
+    ];
+  }
+
+  const { page, pageSize } = pagination;
+  const [data, total] = await Promise.all([
+    prisma.job.findMany({
+      where,
+      orderBy: [{ score: { sort: 'desc', nulls: 'last' } }, { lastSeenAt: 'desc' }],
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    }),
+    prisma.job.count({ where }),
+  ]);
+
+  return { data, total, page, pageSize };
+}
+
+/** Busca uma vaga pelo id (com o breakdown do score). */
+export async function findJobById(id: string) {
+  return prisma.job.findUnique({ where: { id } });
+}

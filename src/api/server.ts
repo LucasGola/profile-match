@@ -1,5 +1,7 @@
 import Fastify from 'fastify';
+import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod';
 import { logger } from '../logger.js';
+import { jobRoutes } from './routes/jobs.js';
 
 /**
  * Constrói a instância do Fastify com as rotas registradas.
@@ -11,7 +13,12 @@ import { logger } from '../logger.js';
 export function buildApp() {
   const app = Fastify({ loggerInstance: logger });
 
+  // Validação de request via zod (reaproveita nossos schemas).
+  app.setValidatorCompiler(validatorCompiler);
+  app.setSerializerCompiler(serializerCompiler);
+
   app.get('/health', () => ({ status: 'ok' }));
+  app.register(jobRoutes);
 
   return app;
 }

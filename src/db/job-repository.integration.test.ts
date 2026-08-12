@@ -126,3 +126,50 @@ describe('persistência de vagas (integração)', () => {
     expect(source.lastRunAt).not.toBeNull();
   });
 });
+
+describe('findJobs / findJobById (integração)', () => {
+  const scored = (over: Partial<ScoredJob> & Pick<ScoredJob, 'url' | 'score'>): ScoredJob => ({
+    title: 'Job',
+    company: 'Co',
+    location: null,
+    description: null,
+    scoreBreakdown: [],
+    ...over,
+  });
+
+  beforeAll(async () => {
+    await db.prisma.job.deleteMany();
+    const remotive = await repo.upsertSource('remotive', 'Remotive');
+    const wwr = await repo.upsertSource('wwr', 'We Work Remotely');
+    await repo.saveJobs(remotive, [
+      scored({ url: 'https://j/1', score: 90, title: 'Senior Node' }),
+      scored({ url: 'https://j/2', score: 20, title: 'Junior PHP' }),
+    ]);
+    await repo.saveJobs(wwr, [scored({ url: 'https://j/3', score: 50, title: 'Mid Go' })]);
+  });
+
+  it('ordena por score desc e pagina', async () => {
+    const { data, total } = await repo.findJobs({}, { page: 1, pageSize: 2 });
+    expect(total).toBe(3);
+    expect(data.map((j) => j.score)).toEqual([90, 50]);
+  });
+
+  it('filtra por minScore', async () => {
+    const { data } = await repo.findJobs({ minScore: 50 }, { page: 1, pageSize: 10 });
+    expect(data).toHaveLength(2);
+    expect(data.every((j) => (j.score ?? 0) >= 50)).toBe(true);
+  });
+
+  it('filtra por fonte (slug)', async () => {
+    const { data, total } = await repo.findJobs({ source: 'wwr' }, { page: 1, pageSize: 10 });
+    expect(total).toBe(1);
+    expect(data[0]?.title).toBe('Mid Go');
+  });
+
+  it('findJobById retorna a vaga ou null', async () => {
+    const { data } = await repo.findJobs({ source: 'wwr' }, { page: 1, pageSize: 1 });
+    const id = data[0]?.id ?? '';
+    expect((await repo.findJobById(id))?.id).toBe(id);
+    expect(await repo.findJobById('inexistente')).toBeNull();
+  });
+});
