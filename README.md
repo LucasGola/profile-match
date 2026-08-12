@@ -15,8 +15,9 @@ matching explicável (sem ML), API cacheada, testes, CI/CD e deploy.
 > workers a partir de 3 fontes (Milestone 2 — Remotive, We Work Remotely e
 > Greenhouse), deduplicação com histórico de vagas (Milestone 3), agendamento
 > automático da coleta (Milestone 4), matching explicável por perfil com score e
-> breakdown (Milestone 5) e API REST com filtros, cache e Swagger (Milestone 6).
-> As demais funcionalidades seguem em construção incremental.
+> breakdown (Milestone 5), API REST com filtros, cache e Swagger (Milestone 6) e
+> notificação seletiva das vagas acima de um limiar (Milestone 7). As demais
+> funcionalidades seguem em construção incremental.
 
 ## Stack
 
@@ -28,7 +29,7 @@ matching explicável (sem ML), API cacheada, testes, CI/CD e deploy.
 | Fontes          | Remotive, WWR (RSS), Greenhouse |
 | Banco de dados  | PostgreSQL + Prisma             |
 | Matching        | Regras + fuse.js                |
-| Notificação     | Telegram / e-mail _(planejado)_ |
+| Notificação     | Telegram (grammY)               |
 | Logs            | pino                            |
 | Testes          | Vitest + Testcontainers         |
 | Lint / format   | ESLint + Prettier               |
