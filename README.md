@@ -72,6 +72,7 @@ coleta sob demanda enfileirando 1 job por fonte.
 | Script                     | Ação                                         |
 | -------------------------- | -------------------------------------------- |
 | `npm run dev`              | Roda a app em modo watch (tsx)               |
+| `npm run api`              | Sobe a API REST (Fastify)                    |
 | `npm run worker`           | Inicia o worker que consome a fila de coleta |
 | `npm run collect`          | Enfileira 1 job de coleta por fonte          |
 | `npm run build`            | Compila para `dist/`                         |
