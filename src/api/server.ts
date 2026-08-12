@@ -1,5 +1,11 @@
+import fastifySwagger from '@fastify/swagger';
+import fastifySwaggerUi from '@fastify/swagger-ui';
 import Fastify from 'fastify';
-import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod';
+import {
+  jsonSchemaTransform,
+  serializerCompiler,
+  validatorCompiler,
+} from 'fastify-type-provider-zod';
 import { logger } from '../logger.js';
 import { jobRoutes } from './routes/jobs.js';
 import { sourceRoutes } from './routes/sources.js';
@@ -17,6 +23,16 @@ export function buildApp() {
   // Validação de request via zod (reaproveita nossos schemas).
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
+
+  // OpenAPI/Swagger gerado a partir dos schemas zod das rotas.
+  // Registrado antes das rotas para o hook onRoute capturá-las.
+  app.register(fastifySwagger, {
+    openapi: {
+      info: { title: 'Profile Match API', version: '0.1.0' },
+    },
+    transform: jsonSchemaTransform,
+  });
+  app.register(fastifySwaggerUi, { routePrefix: '/docs' });
 
   app.get('/health', () => ({ status: 'ok' }));
   app.register(jobRoutes);

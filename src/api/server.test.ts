@@ -15,3 +15,15 @@ describe('GET /health', () => {
     expect(response.json()).toEqual({ status: 'ok' });
   });
 });
+
+describe('OpenAPI (Swagger)', () => {
+  it('expõe o spec com as rotas de vagas', async () => {
+    const response = await app.inject({ method: 'GET', url: '/docs/json' });
+
+    expect(response.statusCode).toBe(200);
+    const spec = response.json<{ openapi: string; paths: Record<string, unknown> }>();
+    expect(spec.openapi).toBeDefined();
+    expect(Object.keys(spec.paths)).toContain('/jobs');
+    expect(Object.keys(spec.paths)).toContain('/sources');
+  });
+});
