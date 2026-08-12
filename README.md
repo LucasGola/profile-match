@@ -14,9 +14,9 @@ matching explicável (sem ML), API cacheada, testes, CI/CD e deploy.
 > vertical de coleta (Milestone 1), coleta assíncrona/concorrente com fila e
 > workers a partir de 3 fontes (Milestone 2 — Remotive, We Work Remotely e
 > Greenhouse), deduplicação com histórico de vagas (Milestone 3), agendamento
-> automático da coleta (Milestone 4) e matching explicável por perfil, com score
-> e breakdown (Milestone 5). As demais funcionalidades seguem em construção
-> incremental.
+> automático da coleta (Milestone 4), matching explicável por perfil com score e
+> breakdown (Milestone 5) e API REST com filtros, cache e Swagger (Milestone 6).
+> As demais funcionalidades seguem em construção incremental.
 
 ## Stack
 
@@ -34,6 +34,18 @@ matching explicável (sem ML), API cacheada, testes, CI/CD e deploy.
 | Lint / format   | ESLint + Prettier               |
 | CI              | GitHub Actions                  |
 | Containerização | Docker + docker-compose         |
+
+## API
+
+Suba com `npm run api` (porta em `API_PORT`, default 3000).
+
+| Endpoint        | Descrição                                                                                                                |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `GET /health`   | Healthcheck.                                                                                                             |
+| `GET /jobs`     | Lista paginada de vagas. Filtros: `minScore`, `source`, `since`, `stack`; paginação `page`/`pageSize`. Cacheado (Redis). |
+| `GET /jobs/:id` | Detalhe da vaga, com o breakdown do score.                                                                               |
+| `GET /sources`  | Fontes ativas e status/duração da última coleta.                                                                         |
+| `GET /docs`     | Documentação interativa (Swagger UI); spec OpenAPI em `/docs/json`.                                                      |
 
 ## Como rodar (desenvolvimento)
 
