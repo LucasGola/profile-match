@@ -1,4 +1,5 @@
 import { logger } from '../logger.js';
+import { closeCache } from './cache.js';
 import { buildApp } from './server.js';
 
 const port = Number(process.env['API_PORT'] ?? '3000');
@@ -7,6 +8,7 @@ const app = buildApp();
 async function shutdown(signal: string): Promise<void> {
   logger.info({ signal }, 'encerrando API');
   await app.close();
+  await closeCache();
   process.exit(0);
 }
 

@@ -4,6 +4,10 @@ vi.mock('../../db/job-repository.js', () => ({
   findJobs: vi.fn(),
   findJobById: vi.fn(),
 }));
+// Cache em passthrough: executa o producer direto (foca a rota no repositório).
+vi.mock('../cache.js', () => ({
+  withCache: vi.fn((_key: string, producer: () => Promise<unknown>) => producer()),
+}));
 
 import { findJobById, findJobs } from '../../db/job-repository.js';
 import { buildApp } from '../server.js';

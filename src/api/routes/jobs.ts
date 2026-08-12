@@ -2,6 +2,7 @@ import type { FastifyPluginCallback } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import { findJobById, findJobs } from '../../db/job-repository.js';
+import { withCache } from '../cache.js';
 
 const listQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
@@ -20,7 +21,8 @@ export const jobRoutes: FastifyPluginCallback = (app, _opts, done) => {
 
   typed.get('/jobs', { schema: { querystring: listQuerySchema } }, async (request) => {
     const { page, pageSize, minScore, source, since, stack } = request.query;
-    return findJobs({ minScore, source, since, stack }, { page, pageSize });
+    const key = `jobs:v1:${String(page)}:${String(pageSize)}:${String(minScore ?? '')}:${source ?? ''}:${since?.toISOString() ?? ''}:${stack ?? ''}`;
+    return withCache(key, () => findJobs({ minScore, source, since, stack }, { page, pageSize }));
   });
 
   typed.get('/jobs/:id', { schema: { params: idParamsSchema } }, async (request, reply) => {
