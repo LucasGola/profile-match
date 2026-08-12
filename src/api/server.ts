@@ -2,6 +2,7 @@ import Fastify from 'fastify';
 import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod';
 import { logger } from '../logger.js';
 import { jobRoutes } from './routes/jobs.js';
+import { sourceRoutes } from './routes/sources.js';
 
 /**
  * Constrói a instância do Fastify com as rotas registradas.
@@ -19,6 +20,7 @@ export function buildApp() {
 
   app.get('/health', () => ({ status: 'ok' }));
   app.register(jobRoutes);
+  app.register(sourceRoutes);
 
   return app;
 }

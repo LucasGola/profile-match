@@ -172,4 +172,11 @@ describe('findJobs / findJobById (integração)', () => {
     expect((await repo.findJobById(id))?.id).toBe(id);
     expect(await repo.findJobById('inexistente')).toBeNull();
   });
+
+  it('listSources retorna as fontes ordenadas por slug', async () => {
+    const slugs = (await repo.listSources()).map((source) => source.slug);
+    expect(slugs).toContain('remotive');
+    expect(slugs).toContain('wwr');
+    expect(slugs).toEqual([...slugs].sort());
+  });
 });

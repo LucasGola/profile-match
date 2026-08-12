@@ -154,3 +154,8 @@ export async function findJobs(filters: JobFilters, pagination: Pagination) {
 export async function findJobById(id: string) {
   return prisma.job.findUnique({ where: { id } });
 }
+
+/** Lista as fontes com o status/duração da última coleta. */
+export async function listSources() {
+  return prisma.source.findMany({ orderBy: { slug: 'asc' } });
+}
