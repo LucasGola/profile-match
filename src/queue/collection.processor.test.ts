@@ -18,8 +18,16 @@ vi.mock('../scoring/profile.js', () => ({
 vi.mock('../scoring/scorer.js', () => ({
   scoreJob: vi.fn(() => ({ score: 42, breakdown: [] })),
 }));
+vi.mock('../notify/notifier.js', () => ({
+  createNotifier: vi.fn(() => ({ send: vi.fn() })),
+}));
+vi.mock('../notify/notify.js', () => ({
+  notifyNewJobs: vi.fn(),
+  getNotifyMinScore: vi.fn(() => 80),
+}));
 
 import { recordSourceRun, saveJobs, upsertSource } from '../db/job-repository.js';
+import { notifyNewJobs } from '../notify/notify.js';
 import { getSourceBySlug } from '../sources/registry.js';
 import { processCollectionJob } from './collection.processor.js';
 
@@ -27,6 +35,7 @@ const mockUpsertSource = vi.mocked(upsertSource);
 const mockSaveJobs = vi.mocked(saveJobs);
 const mockRecordSourceRun = vi.mocked(recordSourceRun);
 const mockGetSourceBySlug = vi.mocked(getSourceBySlug);
+const mockNotifyNewJobs = vi.mocked(notifyNewJobs);
 
 function makeJob(sourceSlug: string): Job<CollectionJobData> {
   return { id: '1', data: { sourceSlug } } as unknown as Job<CollectionJobData>;
@@ -65,6 +74,7 @@ describe('processCollectionJob', () => {
       status: 'success',
       durationMs: expect.any(Number) as number,
     });
+    expect(mockNotifyNewJobs).toHaveBeenCalledOnce();
   });
 
   it('registra a falha (status error) e propaga o erro quando a coleta falha', async () => {

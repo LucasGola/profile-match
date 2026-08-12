@@ -1,13 +1,16 @@
 import type { Job } from 'bullmq';
 import { recordSourceRun, saveJobs, upsertSource } from '../db/job-repository.js';
 import { logger } from '../logger.js';
+import { getNotifyMinScore, notifyNewJobs } from '../notify/notify.js';
+import { createNotifier } from '../notify/notifier.js';
 import { loadProfile } from '../scoring/profile.js';
 import { scoreJob, type ScoredJob } from '../scoring/scorer.js';
 import { getSourceBySlug } from '../sources/registry.js';
 import type { CollectionJobData } from './queues.js';
 
-// Perfil de busca carregado uma vez ao subir o worker.
+// Perfil de busca e notifier carregados uma vez ao subir o worker.
 const profile = loadProfile();
+const notifier = createNotifier();
 
 export interface CollectionResult {
   fetched: number;
@@ -44,6 +47,14 @@ export async function processCollectionJob(job: Job<CollectionJobData>): Promise
     const { inserted, updated } = await saveJobs(sourceId, scored);
 
     await recordSourceRun(sourceId, { status: 'success', durationMs: Date.now() - startedAt });
+
+    // Notificação não deve afetar o resultado da coleta.
+    try {
+      await notifyNewJobs(notifier, getNotifyMinScore());
+    } catch (err) {
+      log.error({ err }, 'falha na notificação');
+    }
+
     log.info({ fetched: jobs.length, inserted, updated }, 'coleta concluída');
     return { fetched: jobs.length, inserted, updated };
   } catch (err) {
