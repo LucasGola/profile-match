@@ -180,3 +180,35 @@ describe('findJobs / findJobById (integração)', () => {
     expect(slugs).toEqual([...slugs].sort());
   });
 });
+
+describe('findJobsToNotify / markNotified (integração)', () => {
+  const scored = (url: string, score: number): ScoredJob => ({
+    title: 'Job',
+    company: 'Co',
+    url,
+    location: null,
+    description: null,
+    score,
+    scoreBreakdown: [],
+  });
+
+  beforeAll(async () => {
+    await db.prisma.job.deleteMany();
+    const sourceId = await repo.upsertSource('remotive', 'Remotive');
+    await repo.saveJobs(sourceId, [scored('https://n/1', 90), scored('https://n/2', 85)]);
+    await repo.saveJobs(sourceId, [scored('https://n/3', 40)]);
+  });
+
+  it('seleciona só vagas acima do limiar e ainda não notificadas', async () => {
+    const jobs = await repo.findJobsToNotify(80);
+    expect(jobs.map((j) => j.score)).toEqual([90, 85]);
+  });
+
+  it('markNotified impede renotificar', async () => {
+    const before = await repo.findJobsToNotify(80);
+    await repo.markNotified(before.map((j) => j.id));
+
+    const after = await repo.findJobsToNotify(80);
+    expect(after).toHaveLength(0);
+  });
+});

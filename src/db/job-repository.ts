@@ -159,3 +159,24 @@ export async function findJobById(id: string) {
 export async function listSources() {
   return prisma.source.findMany({ orderBy: { slug: 'asc' } });
 }
+
+/**
+ * Vagas elegíveis para notificação: score ≥ limiar e ainda não notificadas,
+ * das melhores para as piores.
+ */
+export async function findJobsToNotify(minScore: number, limit = 20) {
+  return prisma.job.findMany({
+    where: { notifiedAt: null, score: { gte: minScore } },
+    orderBy: { score: { sort: 'desc', nulls: 'last' } },
+    take: limit,
+  });
+}
+
+/** Marca vagas como notificadas (idempotência: não renotificar). */
+export async function markNotified(ids: string[]): Promise<void> {
+  if (ids.length === 0) return;
+  await prisma.job.updateMany({
+    where: { id: { in: ids } },
+    data: { notifiedAt: new Date() },
+  });
+}
