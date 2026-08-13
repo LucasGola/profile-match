@@ -36,6 +36,30 @@ matching explicável (sem ML), API cacheada, testes, CI/CD e deploy.
 | CI              | GitHub Actions                  |
 | Containerização | Docker + docker-compose         |
 
+## Arquitetura
+
+```mermaid
+flowchart TD
+    SCH["Scheduler<br/>(BullMQ repeatable)"] -->|"1 job por fonte"| Q[("Fila collection<br/>Redis")]
+    Q --> W["Worker<br/>(concorrência N)"]
+    W -->|fetch + normaliza| SRC{"Fontes plugáveis"}
+    SRC --> RM["Remotive<br/>(API JSON)"]
+    SRC --> WR["We Work Remotely<br/>(RSS)"]
+    SRC --> GH["Greenhouse<br/>(boards públicos)"]
+    RM & WR & GH --> SC["Scoring por perfil<br/>(regras + fuse.js)"]
+    SC -->|"dedup + upsert + histórico"| PG[("PostgreSQL")]
+    SC -->|"score ≥ limiar,<br/>ainda não notificada"| TG["Telegram<br/>(grammY)"]
+    PG --> API["API Fastify<br/>cache Redis · Swagger /docs"]
+    API --> USER(["Você"])
+```
+
+O **scheduler** enfileira 1 job por fonte na fila (Redis); os **workers** consomem
+em paralelo, cada job coletando e normalizando uma fonte de forma isolada (uma
+que falhe não afeta as outras, e há retry com backoff). Cada vaga é **pontuada**
+contra o seu perfil, **deduplicada** e persistida com histórico; as que passam do
+limiar viram **notificação**. A **API** expõe o histórico rankeado, com cache e
+documentação Swagger.
+
 ## API
 
 Suba com `npm run api` (porta em `API_PORT`, default 3000).
@@ -80,6 +104,17 @@ vagas e **agenda a coleta periódica** automaticamente (intervalo em
 `COLLECT_INTERVAL_MS`, padrão 30 min). O `collect` é opcional — dispara uma
 coleta sob demanda enfileirando 1 job por fonte.
 
+### Stack completa em um comando
+
+Para subir tudo (Postgres, Redis, migrations, worker e API) containerizado:
+
+```bash
+npm run docker:app   # docker compose --profile app up --build
+```
+
+O passo `docker:up` continua subindo **apenas** a infraestrutura (Postgres +
+Redis), para desenvolver a app no host.
+
 ### Scripts úteis
 
 | Script                     | Ação                                         |
@@ -95,10 +130,39 @@ coleta sob demanda enfileirando 1 job por fonte.
 | `npm test`                 | Testes unitários (Vitest)                    |
 | `npm run test:integration` | Testes de integração (Testcontainers)        |
 | `npm run docker:up`        | Sobe Postgres + Redis                        |
+| `npm run docker:app`       | Sobe a stack completa (build + app)          |
 | `npm run docker:down`      | Para os containers (mantém os dados)         |
 | `npm run docker:reset`     | Para e **apaga** os volumes (reset do banco) |
 | `npm run db:migrate`       | Cria/aplica migrations (Prisma)              |
 | `npm run db:studio`        | Abre o Prisma Studio                         |
+
+## Decisões técnicas e trade-offs
+
+- **Fila (BullMQ + Redis) em vez de cron simples.** Dá retry com backoff
+  durável, concorrência e isolamento por job (uma fonte que cai não derruba as
+  outras). Trade-off: Redis como dependência — reaproveitado também para cache.
+- **Scoring por regras, não ML.** Explicável (cada score vem com um _breakdown_
+  de quais critérios bateram), sem necessidade de dados de treino, e justificável
+  numa conversa técnica. Trade-off honesto: é baseado em texto, então uma vaga
+  não-técnica de uma empresa de tecnologia pode pontuar por citar a stack na
+  descrição — o _breakdown_ deixa isso visível, e o limiar de notificação corta o
+  ruído. Refinar (pesar título > descrição) é evolução futura.
+- **Coleta "burra", relevância no scoring.** As fontes coletam tudo; o corte de
+  relevância é responsabilidade explícita e configurável do scoring, não
+  hardcoded na coleta.
+- **`fetch` nativo (Node 22) em vez de axios**, e **retry no nível do job**
+  (BullMQ) em vez de `p-retry`: menos dependências para o que o runtime já
+  oferece. O seam para retry por-request (paginação) está documentado no código.
+- **PostgreSQL + Prisma.** Integridade no banco (constraint única de dedup, enum
+  de status) e migrations versionadas — o histórico de migrations conta a
+  evolução do modelo.
+- **`score-on-insert`.** A vaga é pontuada ao ser vista pela primeira vez; a
+  re-coleta só atualiza `lastSeenAt`. Evita re-pontuar centenas de vagas a cada
+  ciclo; re-score em mudança de perfil fica como evolução (seam).
+- **Docker Compose profiles.** `docker:up` sobe só a infra (dev no host);
+  `docker:app` sobe a stack inteira — sem dois arquivos de compose.
+- **Testcontainers.** Testes de integração contra Postgres/Redis reais e
+  efêmeros — determinísticos, sem poluir o ambiente de dev.
 
 ## Como adicionar uma nova fonte
 
@@ -119,6 +183,22 @@ persistência.
 
 Pronto: o produtor passará a enfileirar um job para a nova fonte e o worker a
 coletará junto com as demais, de forma isolada.
+
+## Testes
+
+- **Unitários** (`npm test`): **61** — lógica pura e de aplicação, sem rede/DB/
+  Redis (rodam no CI). Cobrem scoring, dedup, normalização de cada fonte,
+  produtor/processor/scheduler da fila, rotas da API (via `inject`, repositório
+  mockado) e a seleção de notificação.
+- **Integração** (`npm run test:integration`): **13** — Postgres e Redis reais e
+  efêmeros via Testcontainers. Cobrem persistência (upsert/histórico), queries da
+  API, `recordSourceRun`, comportamento de retry/isolamento da fila e o cache.
+
+Ambos rodam no CI (jobs `quality` e `integration`).
+
+Lacunas conscientes: o envio real ao Telegram e os _entrypoints_ de longa duração
+(`worker`/`api`) não têm teste automatizado — a lógica que eles orquestram é
+testada; o _wiring_ é validado manualmente (e2e).
 
 ## Licença
 
