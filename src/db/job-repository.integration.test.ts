@@ -3,12 +3,14 @@ import { join } from 'node:path';
 import { PostgreSqlContainer, type StartedPostgreSqlContainer } from '@testcontainers/postgresql';
 import pg from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { profileSchema } from '../scoring/profile.js';
 import type { ScoredJob } from '../scoring/scorer.js';
 
 let container: StartedPostgreSqlContainer;
 // Importados dinamicamente após DATABASE_URL apontar para o container.
 let repo: typeof import('./job-repository.js');
 let db: typeof import('./client.js');
+let rescore: typeof import('../pipeline/rescore.js');
 
 /**
  * Aplica as migrations versionadas (prisma/migrations) diretamente via pg.
@@ -44,6 +46,7 @@ beforeAll(async () => {
 
   repo = await import('./job-repository.js');
   db = await import('./client.js');
+  rescore = await import('../pipeline/rescore.js');
 });
 
 afterAll(async () => {
@@ -210,5 +213,34 @@ describe('findJobsToNotify / markNotified (integração)', () => {
 
     const after = await repo.findJobsToNotify(80);
     expect(after).toHaveLength(0);
+  });
+});
+
+describe('rescoreAllJobs (integração)', () => {
+  beforeAll(async () => {
+    await db.prisma.job.deleteMany();
+    const sourceId = await repo.upsertSource('remotive', 'Remotive');
+    await repo.saveJobs(sourceId, [
+      {
+        title: 'Senior Node Backend Engineer',
+        company: 'Acme',
+        url: 'https://rs/1',
+        location: null,
+        description: 'We use node and postgres.',
+        score: 1, // score inicial "errado" de propósito
+        scoreBreakdown: [],
+      },
+    ]);
+  });
+
+  it('re-pontua as vagas com o novo perfil', async () => {
+    const profile = profileSchema.parse({ stack: ['node', 'postgres'], seniority: 'senior' });
+
+    const count = await rescore.rescoreAllJobs(profile);
+    expect(count).toBe(1);
+
+    const job = await db.prisma.job.findFirstOrThrow({ where: { url: 'https://rs/1' } });
+    expect(job.score).toBeGreaterThan(50); // recomputado, bem acima do 1 inicial
+    expect(job.scoreBreakdown).not.toEqual([]); // breakdown preenchido
   });
 });

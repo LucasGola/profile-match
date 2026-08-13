@@ -8,8 +8,7 @@ import { scoreJob, type ScoredJob } from '../scoring/scorer.js';
 import { getSourceBySlug } from '../sources/registry.js';
 import type { CollectionJobData } from './queues.js';
 
-// Perfil de busca e notifier carregados uma vez ao subir o worker.
-const profile = loadProfile();
+// Notifier carregado uma vez ao subir o worker.
 const notifier = createNotifier();
 
 export interface CollectionResult {
@@ -37,6 +36,9 @@ export async function processCollectionJob(job: Job<CollectionJobData>): Promise
 
   const sourceId = await upsertSource(source.slug, source.name);
   const startedAt = Date.now();
+
+  // Relê o perfil a cada coleta: mudanças (ex.: pela UI) valem sem reiniciar.
+  const profile = loadProfile();
 
   try {
     const jobs = await source.fetch();
