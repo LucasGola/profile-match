@@ -16,12 +16,18 @@ export async function rescoreAllJobs(profile: Profile): Promise<number> {
     select: { id: true, title: true, company: true, url: true, location: true, description: true },
   });
 
-  for (const job of jobs) {
-    const { score, breakdown } = scoreJob(job, profile);
-    await prisma.job.update({
-      where: { id: job.id },
-      data: { score, scoreBreakdown: breakdown as unknown as Prisma.InputJsonValue },
-    });
+  // Atualiza em lotes paralelos (sequencial seria lento para milhares de vagas).
+  const CHUNK_SIZE = 20;
+  for (let i = 0; i < jobs.length; i += CHUNK_SIZE) {
+    await Promise.all(
+      jobs.slice(i, i + CHUNK_SIZE).map((job) => {
+        const { score, breakdown } = scoreJob(job, profile);
+        return prisma.job.update({
+          where: { id: job.id },
+          data: { score, scoreBreakdown: breakdown as unknown as Prisma.InputJsonValue },
+        });
+      }),
+    );
   }
 
   return jobs.length;

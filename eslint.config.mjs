@@ -6,7 +6,7 @@ import eslintConfigPrettier from 'eslint-config-prettier';
 export default tseslint.config(
   {
     // Arquivos/pastas ignorados globalmente
-    ignores: ['dist/**', 'node_modules/**', 'coverage/**', 'src/generated/**'],
+    ignores: ['dist/**', 'node_modules/**', 'coverage/**', 'src/generated/**', 'web/**'],
   },
   js.configs.recommended,
   {

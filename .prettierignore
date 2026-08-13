@@ -5,5 +5,8 @@ pnpm-lock.yaml
 package-lock.json
 src/generated
 
+# Frontend: projeto separado, com lint/format próprios
+web
+
 # Documentos importados (não reformatar)
 projeto.md

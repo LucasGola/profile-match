@@ -25,7 +25,10 @@ export function buildApp() {
 
   // CORS para o dashboard consumir a API do browser.
   // CORS_ORIGIN define a origem permitida; sem ela, reflete qualquer origem (dev).
-  app.register(fastifyCors, { origin: process.env['CORS_ORIGIN'] ?? true });
+  app.register(fastifyCors, {
+    origin: process.env['CORS_ORIGIN'] ?? true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  });
 
   // Validação de request via zod (reaproveita nossos schemas).
   app.setValidatorCompiler(validatorCompiler);
