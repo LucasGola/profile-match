@@ -10,6 +10,7 @@ import { logger } from '../logger.js';
 import { jobRoutes } from './routes/jobs.js';
 import { profileRoutes } from './routes/profile.js';
 import { sourceRoutes } from './routes/sources.js';
+import { statsRoutes } from './routes/stats.js';
 
 /**
  * Constrói a instância do Fastify com as rotas registradas.
@@ -39,6 +40,7 @@ export function buildApp() {
   app.register(jobRoutes);
   app.register(sourceRoutes);
   app.register(profileRoutes);
+  app.register(statsRoutes);
 
   return app;
 }

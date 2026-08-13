@@ -244,3 +244,40 @@ describe('rescoreAllJobs (integração)', () => {
     expect(job.scoreBreakdown).not.toEqual([]); // breakdown preenchido
   });
 });
+
+describe('getStats (integração)', () => {
+  const scored = (url: string, score: number): ScoredJob => ({
+    title: 'Job',
+    company: 'Co',
+    url,
+    location: null,
+    description: null,
+    score,
+    scoreBreakdown: [],
+  });
+
+  beforeAll(async () => {
+    await db.prisma.job.deleteMany();
+    const remotive = await repo.upsertSource('remotive', 'Remotive');
+    const wwr = await repo.upsertSource('wwr', 'We Work Remotely');
+    await repo.saveJobs(remotive, [scored('https://st/1', 90), scored('https://st/2', 10)]);
+    await repo.saveJobs(wwr, [scored('https://st/3', 55)]);
+  });
+
+  it('agrega total, por fonte e por faixa de score', async () => {
+    const stats = await repo.getStats();
+
+    expect(stats.total).toBe(3);
+
+    const bySource = Object.fromEntries(stats.bySource.map((s) => [s.source, s.count]));
+    expect(bySource['remotive']).toBe(2);
+    expect(bySource['wwr']).toBe(1);
+
+    const buckets = Object.fromEntries(stats.byScoreBucket.map((b) => [b.bucket, b.count]));
+    expect(buckets['80-100']).toBe(1);
+    expect(buckets['0-19']).toBe(1);
+    expect(buckets['40-59']).toBe(1);
+
+    expect(stats.byDay.length).toBeGreaterThan(0);
+  });
+});
