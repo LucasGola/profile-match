@@ -60,6 +60,22 @@ contra o seu perfil, **deduplicada** e persistida com histórico; as que passam 
 limiar viram **notificação**. A **API** expõe o histórico rankeado, com cache e
 documentação Swagger.
 
+### Scoring configurável (`profile.json`)
+
+O matching é 100% configurável pelo `profile.json` (veja `profile.example.json`)
+— tudo com defaults, então só o que você quiser sobrescrever precisa aparecer:
+
+- **`stack`, `keywords`, `seniority`, `remote`** — o que você procura.
+- **`weights`** — o peso de cada critério no score (default `stack:5`,
+  `seniority:2`, `remote:2`, `keywords:1`).
+- **`matching`** — `fuzzyThreshold` (tolerância do fuzzy, 0–1),
+  `unknownSeniorityScore`, e as listas de termos que identificam senioridade
+  (`seniorityTerms`) e trabalho remoto (`remoteTerms`).
+
+O score é a **média ponderada** das aderências pelos pesos dos critérios
+aplicáveis, normalizada para 0–100. O limiar de _notificação_ é separado
+(`NOTIFY_MIN_SCORE`) — toda vaga é pontuada; o limiar só corta o que vira alerta.
+
 ## API
 
 Suba com `npm run api` (porta em `API_PORT`, default 3000).
@@ -83,7 +99,7 @@ npm install
 # 2. Configurar variáveis de ambiente
 cp .env.example .env
 
-# 3. Configurar seu perfil de busca (stack, senioridade, keywords, remoto)
+# 3. Configurar seu perfil de busca (e, opcionalmente, o matching)
 cp profile.example.json profile.json
 
 # 4. Subir Postgres e Redis
