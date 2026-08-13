@@ -16,6 +16,18 @@ describe('GET /health', () => {
   });
 });
 
+describe('CORS', () => {
+  it('reflete a origem na resposta', async () => {
+    const response = await app.inject({
+      method: 'GET',
+      url: '/health',
+      headers: { origin: 'http://localhost:5173' },
+    });
+
+    expect(response.headers['access-control-allow-origin']).toBe('http://localhost:5173');
+  });
+});
+
 describe('OpenAPI (Swagger)', () => {
   it('expõe o spec com as rotas de vagas', async () => {
     const response = await app.inject({ method: 'GET', url: '/docs/json' });
