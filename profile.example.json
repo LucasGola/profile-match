@@ -2,5 +2,32 @@
   "stack": ["typescript", "node", "postgres", "fastify"],
   "seniority": "senior",
   "keywords": ["backend", "api", "sql"],
-  "remote": true
+  "remote": true,
+
+  "weights": {
+    "stack": 5,
+    "seniority": 2,
+    "remote": 2,
+    "keywords": 1
+  },
+
+  "matching": {
+    "fuzzyThreshold": 0.3,
+    "unknownSeniorityScore": 0.5,
+    "seniorityTerms": {
+      "senior": ["senior", "sênior", "sr", "lead", "staff", "principal"],
+      "mid": ["pleno", "mid", "mid-level", "intermediate", "intermediário"],
+      "junior": ["junior", "júnior", "jr", "intern", "trainee", "estágio", "estagi"]
+    },
+    "remoteTerms": [
+      "remote",
+      "remoto",
+      "anywhere",
+      "worldwide",
+      "home office",
+      "distributed",
+      "híbrido",
+      "hybrid"
+    ]
+  }
 }

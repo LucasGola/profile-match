@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import type { NormalizedJob } from '../pipeline/job.schema.js';
-import type { Profile } from './profile.js';
+import { profileSchema } from './profile.js';
 import { detectRemote, detectSeniority, matchTerms, scoreJob } from './scorer.js';
+
+const makeProfile = (overrides: Record<string, unknown>) => profileSchema.parse(overrides);
 
 describe('matchTerms', () => {
   it('casa termos com variação (node↔node.js, postgres↔postgresql)', () => {
@@ -16,6 +18,11 @@ describe('matchTerms', () => {
   it('não casa termos ausentes', () => {
     expect(matchTerms(['python', 'rust'], 'Node.js backend role')).toEqual([]);
   });
+
+  it('respeita o threshold fuzzy (typo tolerado só com folga)', () => {
+    expect(matchTerms(['kubernetz'], 'we use kubernetes', 0.3)).toEqual(['kubernetz']);
+    expect(matchTerms(['kubernetz'], 'we use kubernetes', 0)).toEqual([]);
+  });
 });
 
 describe('detectSeniority', () => {
@@ -28,6 +35,12 @@ describe('detectSeniority', () => {
   ] as const)('detecta "%s" como %s', (title, expected) => {
     expect(detectSeniority(title)).toBe(expected);
   });
+
+  it('aceita termos de senioridade customizados', () => {
+    const terms = { senior: ['especialista'], mid: [], junior: [] };
+    expect(detectSeniority('Engenheiro Especialista', terms)).toBe('senior');
+    expect(detectSeniority('Engenheiro Especialista')).toBeNull();
+  });
 });
 
 describe('detectRemote', () => {
@@ -37,15 +50,19 @@ describe('detectRemote', () => {
   it('não marca remoto quando não indicado', () => {
     expect(detectRemote('Backend Engineer, São Paulo office')).toBe(false);
   });
+  it('aceita termos de remoto customizados', () => {
+    expect(detectRemote('Vaga em teletrabalho', ['teletrabalho'])).toBe(true);
+    expect(detectRemote('Vaga em teletrabalho')).toBe(false);
+  });
 });
 
 describe('scoreJob', () => {
-  const profile: Profile = {
+  const profile = makeProfile({
     stack: ['node', 'postgres', 'typescript'],
     seniority: 'senior',
     keywords: ['backend'],
     remote: true,
-  };
+  });
 
   const strongJob: NormalizedJob = {
     title: 'Senior Node.js Backend Engineer (Remote)',
@@ -84,5 +101,21 @@ describe('scoreJob', () => {
   it('critério não aplicável (perfil sem keywords) fica fora do breakdown', () => {
     const { breakdown } = scoreJob(strongJob, { ...profile, keywords: [] });
     expect(breakdown.some((b) => b.criterion === 'keywords')).toBe(false);
+  });
+
+  it('pesos configuráveis alteram o score', () => {
+    // Stack casa; remoto diverge (perfil quer remoto, vaga é presencial).
+    const job: NormalizedJob = {
+      title: 'Node Engineer',
+      company: 'Acme',
+      url: 'https://x.com/3',
+      location: 'São Paulo office',
+      description: 'We use node.',
+    };
+    const base = makeProfile({ stack: ['node'] }); // remote default = true
+    const stackHeavy = makeProfile({ stack: ['node'], weights: { stack: 10, remote: 0 } });
+
+    // Zerando o peso de remoto (que diverge), só a stack (que casa) conta.
+    expect(scoreJob(job, stackHeavy).score).toBeGreaterThan(scoreJob(job, base).score);
   });
 });
