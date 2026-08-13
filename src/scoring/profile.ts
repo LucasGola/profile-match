@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { z } from 'zod';
 import { logger } from '../logger.js';
 import {
@@ -80,4 +80,10 @@ export function loadProfile(): Profile {
 
   const raw: unknown = JSON.parse(readFileSync(path, 'utf8'));
   return profileSchema.parse(raw);
+}
+
+/** Grava o perfil em `profile.json` (caminho via PROFILE_PATH). */
+export function saveProfile(profile: Profile): void {
+  const path = process.env['PROFILE_PATH'] ?? 'profile.json';
+  writeFileSync(path, `${JSON.stringify(profile, null, 2)}\n`, 'utf8');
 }

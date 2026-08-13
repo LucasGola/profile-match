@@ -8,6 +8,7 @@ import {
 } from 'fastify-type-provider-zod';
 import { logger } from '../logger.js';
 import { jobRoutes } from './routes/jobs.js';
+import { profileRoutes } from './routes/profile.js';
 import { sourceRoutes } from './routes/sources.js';
 
 /**
@@ -37,6 +38,7 @@ export function buildApp() {
   app.get('/health', () => ({ status: 'ok' }));
   app.register(jobRoutes);
   app.register(sourceRoutes);
+  app.register(profileRoutes);
 
   return app;
 }
