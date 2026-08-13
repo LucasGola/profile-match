@@ -42,6 +42,56 @@ services:
       timeout: 5s
       retries: 5
 
+  # --- Serviços de app (profile "app": docker compose --profile app up --build) ---
+
+  # Aplica as migrations e sai; worker/api esperam sua conclusão.
+  migrate:
+    build: .
+    profiles: [app]
+    command: npx prisma migrate deploy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-profilematch}:${POSTGRES_PASSWORD:-profilematch}@postgres:5432/${POSTGRES_DB:-profilematch}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  worker:
+    build: .
+    profiles: [app]
+    restart: unless-stopped
+    command: node dist/queue/worker.js
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-profilematch}:${POSTGRES_PASSWORD:-profilematch}@postgres:5432/${POSTGRES_DB:-profilematch}
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  api:
+    build: .
+    profiles: [app]
+    restart: unless-stopped
+    command: node dist/api/index.js
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-profilematch}:${POSTGRES_PASSWORD:-profilematch}@postgres:5432/${POSTGRES_DB:-profilematch}
+      REDIS_URL: redis://redis:6379
+      API_PORT: 3000
+    ports:
+      - '${API_PORT:-3000}:3000'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
 volumes:
   postgres_data:
   redis_data:

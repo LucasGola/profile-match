@@ -1,0 +1,11 @@
+node_modules
+dist
+.git
+.github
+coverage
+.env
+.env.*
+!.env.example
+src/generated
+projeto.md
+*.log
