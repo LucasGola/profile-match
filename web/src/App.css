@@ -1,40 +1,74 @@
 .app {
-  max-width: 780px;
+  max-width: 820px;
   margin: 0 auto;
-  padding: 24px 16px 64px;
+  padding: 40px 20px 80px;
 }
 
-.app-header h1 {
-  margin: 0;
-  font-size: 26px;
+/* --- Header --- */
+.app-header {
+  margin-bottom: 24px;
 }
-.app-header p {
-  margin: 4px 0 16px;
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.brand-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-strong) 100%);
+  color: #fff;
+  font-size: 24px;
+  box-shadow: 0 4px 12px rgba(42, 120, 214, 0.35);
+}
+.brand h1 {
+  margin: 0;
+  font-size: 24px;
+  letter-spacing: -0.02em;
+}
+.brand p {
+  margin: 2px 0 0;
   color: var(--muted);
+  font-size: 14px;
 }
 
 .tabs {
-  display: flex;
-  gap: 6px;
-  border-bottom: 1px solid var(--border);
+  display: inline-flex;
+  gap: 2px;
+  margin-top: 22px;
+  padding: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  box-shadow: var(--shadow-sm);
 }
 .tab {
   border: none;
   background: none;
-  padding: 10px 14px;
-  font-size: 15px;
-  color: var(--muted);
+  padding: 8px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-2);
   cursor: pointer;
-  border-bottom: 2px solid transparent;
+  border-radius: 999px;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+.tab:hover {
+  color: var(--text);
 }
 .tab-active {
-  color: var(--text);
-  border-bottom-color: var(--accent);
-  font-weight: 600;
+  color: #fff;
+  background: var(--accent);
 }
 
 .app-main {
-  margin-top: 20px;
+  margin-top: 8px;
 }
 
 .muted {
@@ -42,9 +76,23 @@
 }
 .error {
   color: #c0392b;
+  font-weight: 600;
 }
 .ok {
-  color: #1e7a46;
+  color: var(--good);
+  font-weight: 600;
+}
+
+/* --- Card base --- */
+.card,
+.job,
+.form,
+.tile,
+.chart {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
 }
 
 /* --- Vagas --- */
@@ -53,12 +101,23 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
+  padding: 4px 2px;
 }
 .slider {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
+  font-size: 14px;
+  color: var(--text-2);
+}
+.slider input[type='range'] {
+  accent-color: var(--accent);
+  width: 180px;
+}
+.slider strong {
+  min-width: 26px;
+  color: var(--text);
 }
 
 .jobs {
@@ -67,129 +126,177 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 .job {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 8px;
   overflow: hidden;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+.job:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow);
 }
 .job-head {
   width: 100%;
   display: grid;
-  grid-template-columns: 44px 1fr auto;
-  gap: 12px;
+  grid-template-columns: 52px 1fr auto;
+  gap: 14px;
   align-items: center;
-  padding: 12px 14px;
+  padding: 14px 16px;
   background: none;
   border: none;
   cursor: pointer;
   text-align: left;
-  font-size: 15px;
 }
 .job-title {
   font-weight: 600;
+  font-size: 15px;
 }
 .job-company {
   color: var(--muted);
   font-size: 13px;
+  white-space: nowrap;
 }
 
 .score {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 40px;
-  height: 28px;
-  border-radius: 6px;
+  width: 46px;
+  height: 32px;
+  border-radius: 8px;
   font-weight: 700;
-  font-size: 14px;
-  color: #fff;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
 }
 .score-high {
-  background: #22a06b;
+  background: rgba(12, 163, 12, 0.14);
+  color: #0a7a0a;
 }
 .score-mid {
-  background: #e2b93b;
-  color: #4a3c00;
+  background: rgba(224, 161, 0, 0.16);
+  color: #9a6f00;
 }
 .score-low {
-  background: #d0d5db;
-  color: #4a5560;
+  background: rgba(120, 130, 145, 0.14);
+  color: #5b6270;
 }
 .score-na {
-  background: #eceff2;
+  background: rgba(120, 130, 145, 0.1);
   color: var(--muted);
 }
 
 .job-detail {
-  padding: 0 14px 14px 70px;
+  padding: 4px 16px 16px 82px;
+  animation: fade 0.15s ease;
+}
+@keyframes fade {
+  from {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
 }
 .breakdown {
   width: 100%;
   border-collapse: collapse;
-  margin: 6px 0 10px;
+  margin: 4px 0 12px;
   font-size: 13px;
 }
 .breakdown td {
-  padding: 4px 6px;
+  padding: 7px 8px;
   border-top: 1px solid var(--border);
+  vertical-align: middle;
 }
 .breakdown .crit {
   font-weight: 600;
   text-transform: capitalize;
+  width: 92px;
 }
-.breakdown .pct {
-  text-align: right;
-  color: var(--muted);
+.breakdown .detail {
+  color: var(--text-2);
+}
+.breakdown .bar-cell {
+  width: 120px;
+}
+.bar-track {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.bar-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 999px;
 }
 
 /* --- Formulário --- */
 .form {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  max-width: 520px;
+  gap: 16px;
+  max-width: 560px;
+  padding: 24px;
 }
 .form label {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
   font-weight: 600;
-  font-size: 14px;
+  font-size: 13px;
+  color: var(--text-2);
 }
 .form input,
 .form select {
-  padding: 8px 10px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
+  padding: 9px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
   font-size: 15px;
   font-weight: 400;
-  background: var(--card);
+  color: var(--text);
+  background: var(--surface);
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+.form input:focus,
+.form select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-weak);
 }
 .form .checkbox {
   flex-direction: row;
   align-items: center;
   gap: 8px;
+  color: var(--text);
 }
 .form .checkbox input {
   width: auto;
+  accent-color: var(--accent);
 }
 fieldset {
   border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 12px;
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  margin: 0;
+  background: var(--surface-2);
 }
 legend {
   padding: 0 6px;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 .weights {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
+  gap: 12px;
 }
 .weight {
   text-transform: capitalize;
@@ -202,20 +309,32 @@ legend {
   cursor: pointer;
   padding: 0;
   font-size: 14px;
+  font-weight: 600;
 }
 .form-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
+  flex-wrap: wrap;
 }
 .form-actions button {
-  padding: 9px 18px;
+  padding: 10px 22px;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   background: var(--accent);
   color: #fff;
   font-weight: 600;
+  font-size: 15px;
   cursor: pointer;
+  transition:
+    background 0.15s,
+    transform 0.05s;
+}
+.form-actions button:hover:not(:disabled) {
+  background: var(--accent-strong);
+}
+.form-actions button:active:not(:disabled) {
+  transform: translateY(1px);
 }
 .form-actions button:disabled {
   opacity: 0.6;
@@ -226,36 +345,34 @@ legend {
 .analytics {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 18px;
 }
 .tiles {
-  display: flex;
-  gap: 12px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
 }
 .tile {
-  flex: 1;
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 16px;
+  padding: 18px 20px;
   display: flex;
   flex-direction: column;
+  gap: 2px;
 }
 .tile-value {
-  font-size: 28px;
+  font-size: 30px;
   font-weight: 700;
+  letter-spacing: -0.02em;
 }
 .tile-label {
   color: var(--muted);
   font-size: 13px;
 }
 .chart {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 14px 14px 8px;
+  padding: 18px 18px 10px;
 }
 .chart h3 {
-  margin: 0 0 10px;
-  font-size: 15px;
+  margin: 0 0 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-2);
 }

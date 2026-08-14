@@ -18,12 +18,21 @@ export default function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <h1>Profile Match</h1>
-        <p>Vagas rankeadas pela aderência ao seu perfil.</p>
-        <nav className="tabs">
+        <div className="brand">
+          <span className="brand-mark" aria-hidden="true">
+            ◎
+          </span>
+          <div>
+            <h1>Profile Match</h1>
+            <p>Vagas rankeadas pela aderência ao seu perfil.</p>
+          </div>
+        </div>
+        <nav className="tabs" role="tablist">
           {TABS.map((t) => (
             <button
               key={t.id}
+              role="tab"
+              aria-selected={t.id === tab}
               className={t.id === tab ? 'tab tab-active' : 'tab'}
               onClick={() => {
                 setTab(t.id);

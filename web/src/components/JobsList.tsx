@@ -84,8 +84,15 @@ export function JobsList() {
                       {(job.scoreBreakdown ?? []).map((b) => (
                         <tr key={b.criterion}>
                           <td className="crit">{b.criterion}</td>
-                          <td>{b.detail}</td>
-                          <td className="pct">{Math.round(b.score * 100)}%</td>
+                          <td className="detail">{b.detail}</td>
+                          <td className="bar-cell">
+                            <div className="bar-track">
+                              <div
+                                className="bar-fill"
+                                style={{ width: `${String(Math.round(b.score * 100))}%` }}
+                              />
+                            </div>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
