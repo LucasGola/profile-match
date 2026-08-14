@@ -27,6 +27,10 @@ const tooltipStyle = {
 } as const;
 const cursorFill = { fill: 'rgba(109,118,245,0.1)' } as const;
 const labelStyle = { color: '#eceef3' } as const;
+// Cor fixa e legível para a linha do valor: sem isto, o Recharts herda a cor da
+// série — que nas barras com gradiente é "url(#grad-…)" (inválida como cor de
+// texto → cai no preto, ilegível sobre o fundo escuro do tooltip).
+const itemStyle = { color: '#eceef3' } as const;
 
 function AccentGradient({ id }: { id: string }) {
   return (
@@ -81,7 +85,12 @@ export function Analytics() {
             <CartesianGrid vertical={false} stroke={GRID} />
             <XAxis dataKey="bucket" tick={tickStyle} axisLine={false} tickLine={false} />
             <YAxis tick={tickStyle} axisLine={false} tickLine={false} allowDecimals={false} />
-            <Tooltip contentStyle={tooltipStyle} labelStyle={labelStyle} cursor={cursorFill} />
+            <Tooltip
+              contentStyle={tooltipStyle}
+              labelStyle={labelStyle}
+              itemStyle={itemStyle}
+              cursor={cursorFill}
+            />
             <Bar dataKey="count" radius={[6, 6, 0, 0]} maxBarSize={70}>
               {stats.byScoreBucket.map((entry, i) => (
                 <Cell key={entry.bucket} fill={SCORE_COLORS[i % SCORE_COLORS.length] ?? AXIS} />
@@ -116,7 +125,12 @@ export function Analytics() {
               tickLine={false}
               width={92}
             />
-            <Tooltip contentStyle={tooltipStyle} labelStyle={labelStyle} cursor={cursorFill} />
+            <Tooltip
+              contentStyle={tooltipStyle}
+              labelStyle={labelStyle}
+              itemStyle={itemStyle}
+              cursor={cursorFill}
+            />
             <Bar dataKey="count" fill="url(#grad-source)" radius={[0, 6, 6, 0]} maxBarSize={38} />
           </BarChart>
         </ResponsiveContainer>
@@ -130,7 +144,12 @@ export function Analytics() {
             <CartesianGrid vertical={false} stroke={GRID} />
             <XAxis dataKey="date" tick={tickStyle} axisLine={false} tickLine={false} />
             <YAxis tick={tickStyle} axisLine={false} tickLine={false} allowDecimals={false} />
-            <Tooltip contentStyle={tooltipStyle} labelStyle={labelStyle} cursor={cursorFill} />
+            <Tooltip
+              contentStyle={tooltipStyle}
+              labelStyle={labelStyle}
+              itemStyle={itemStyle}
+              cursor={cursorFill}
+            />
             <Bar dataKey="count" fill="url(#grad-day)" radius={[6, 6, 0, 0]} maxBarSize={54} />
           </BarChart>
         </ResponsiveContainer>

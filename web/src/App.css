@@ -153,9 +153,21 @@
   accent-color: var(--accent);
   width: 190px;
 }
-.slider strong {
-  min-width: 26px;
+.score-input {
+  width: 58px;
+  padding: 6px 8px;
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
   color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+}
+.score-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
 .jobs {
@@ -341,11 +353,18 @@ legend {
 }
 .weights {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  /* minmax(0, 1fr): sem o 0 o mínimo vira a largura intrínseca dos inputs
+     number (com spinners) e o fieldset transborda o container do form. */
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
 }
 .weight {
+  min-width: 0;
   text-transform: capitalize;
+}
+.weight input {
+  width: 100%;
+  min-width: 0;
 }
 .link {
   align-self: flex-start;

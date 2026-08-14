@@ -17,33 +17,41 @@ export function JobsList() {
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
 
+  // Arrastar o slider ou digitar atualiza minScore na hora (UI responsiva), mas
+  // a busca só dispara ~300ms depois da última mudança. Sem isso, cada tique do
+  // slider refazia a chamada à API e a lista ficava piscando ("sensível").
   useEffect(() => {
     let active = true;
-    setLoading(true);
-    api
-      .getJobs({ minScore: minScore || undefined, pageSize: 50 })
-      .then((res) => {
-        if (!active) return;
-        setJobs(res.data);
-        setTotal(res.total);
-        setError(null);
-      })
-      .catch((e: unknown) => {
-        if (active) setError(e instanceof Error ? e.message : 'erro ao carregar');
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
+    const handle = setTimeout(() => {
+      setLoading(true);
+      api
+        .getJobs({ minScore: minScore || undefined, pageSize: 50 })
+        .then((res) => {
+          if (!active) return;
+          setJobs(res.data);
+          setTotal(res.total);
+          setError(null);
+        })
+        .catch((e: unknown) => {
+          if (active) setError(e instanceof Error ? e.message : 'erro ao carregar');
+        })
+        .finally(() => {
+          if (active) setLoading(false);
+        });
+    }, 300);
     return () => {
       active = false;
+      clearTimeout(handle);
     };
   }, [minScore]);
+
+  const clampScore = (n: number) => Math.max(0, Math.min(100, Math.round(n)));
 
   return (
     <section>
       <div className="controls">
-        <label className="slider">
-          Score mínimo: <strong>{minScore}</strong>
+        <div className="slider">
+          <span>Score mínimo</span>
           <input
             type="range"
             min={0}
@@ -53,7 +61,18 @@ export function JobsList() {
               setMinScore(Number(e.target.value));
             }}
           />
-        </label>
+          <input
+            type="number"
+            className="score-input"
+            min={0}
+            max={100}
+            value={minScore}
+            onChange={(e) => {
+              const raw = e.target.value;
+              setMinScore(raw === '' ? 0 : clampScore(Number(raw)));
+            }}
+          />
+        </div>
         <span className="muted">{total} vaga(s)</span>
       </div>
 
