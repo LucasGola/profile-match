@@ -1,21 +1,12 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api';
 import type { Profile, Seniority } from '../types';
-
-const toText = (arr: string[]) => arr.join(', ');
-const toArr = (text: string) =>
-  text
-    .split(',')
-    .map((t) => t.trim())
-    .filter((t) => t.length > 0);
+import { TagInput } from './TagInput';
 
 const WEIGHT_KEYS = ['stack', 'seniority', 'remote', 'keywords'] as const;
 
 export function ProfileForm() {
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [stackText, setStackText] = useState('');
-  const [keywordsText, setKeywordsText] = useState('');
-  const [remoteTermsText, setRemoteTermsText] = useState('');
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -26,11 +17,7 @@ export function ProfileForm() {
     api
       .getProfile()
       .then((p) => {
-        if (!active) return;
-        setProfile(p);
-        setStackText(toText(p.stack));
-        setKeywordsText(toText(p.keywords));
-        setRemoteTermsText(toText(p.matching.remoteTerms));
+        if (active) setProfile(p);
       })
       .catch((e: unknown) => {
         if (active) setError(e instanceof Error ? e.message : 'erro ao carregar');
@@ -47,14 +34,8 @@ export function ProfileForm() {
     setSaving(true);
     setStatus(null);
     setError(null);
-    const payload: Profile = {
-      ...profile,
-      stack: toArr(stackText),
-      keywords: toArr(keywordsText),
-      matching: { ...profile.matching, remoteTerms: toArr(remoteTermsText) },
-    };
     try {
-      const res = await api.saveProfile(payload);
+      const res = await api.saveProfile(profile);
       setProfile(res.profile);
       setStatus(`Perfil salvo — ${String(res.rescored)} vaga(s) re-pontuada(s).`);
     } catch (e: unknown) {
@@ -67,22 +48,22 @@ export function ProfileForm() {
   return (
     <section className="form">
       <label>
-        Stack (separado por vírgula)
-        <input
-          value={stackText}
-          onChange={(e) => {
-            setStackText(e.target.value);
+        Stack (Enter para adicionar)
+        <TagInput
+          value={profile.stack}
+          onChange={(stack) => {
+            setProfile({ ...profile, stack });
           }}
           placeholder="typescript, node, postgres"
         />
       </label>
 
       <label>
-        Palavras-chave
-        <input
-          value={keywordsText}
-          onChange={(e) => {
-            setKeywordsText(e.target.value);
+        Palavras-chave (Enter para adicionar)
+        <TagInput
+          value={profile.keywords}
+          onChange={(keywords) => {
+            setProfile({ ...profile, keywords });
           }}
           placeholder="backend, api"
         />
@@ -165,11 +146,14 @@ export function ProfileForm() {
             />
           </label>
           <label>
-            Termos que indicam &quot;remoto&quot;
-            <input
-              value={remoteTermsText}
-              onChange={(e) => {
-                setRemoteTermsText(e.target.value);
+            Termos que indicam &quot;remoto&quot; (Enter para adicionar)
+            <TagInput
+              value={profile.matching.remoteTerms}
+              onChange={(remoteTerms) => {
+                setProfile({
+                  ...profile,
+                  matching: { ...profile.matching, remoteTerms },
+                });
               }}
             />
           </label>

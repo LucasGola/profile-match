@@ -325,6 +325,78 @@
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
+/* Campo de tags (chips). O input interno herda .form input, então os overrides
+   ficam sob .tag-input para vencer por especificidade. */
+.tag-input {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+  min-height: 44px;
+  padding: 7px 8px;
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+.tag-input:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 4px 3px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--border-2);
+  background: var(--accent-soft);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 500;
+}
+.tag-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-2);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background 0.12s,
+    color 0.12s;
+}
+.tag-remove:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--text);
+}
+.tag-input .tag-draft {
+  flex: 1;
+  min-width: 100px;
+  padding: 4px 2px;
+  border: none;
+  background: transparent;
+  font-size: 15px;
+  color: var(--text);
+}
+.tag-input .tag-draft:focus {
+  outline: none;
+  border: none;
+  box-shadow: none;
+}
+.tag-input .tag-draft::placeholder {
+  color: var(--muted);
+}
+
 .form .checkbox {
   flex-direction: row;
   align-items: center;
