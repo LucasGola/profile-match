@@ -12,19 +12,32 @@ import {
 import { api } from '../api';
 import type { Stats } from '../types';
 
-// Rampa semântica de "qualidade do match": neutro → âmbar → verde.
-const SCORE_COLORS = ['#c2c7d0', '#e6c15a', '#e0a100', '#5cb85c', '#0ca30c'];
-const ACCENT = '#2a78d6';
-const AXIS = '#8a909c';
-const GRID = '#eef0f3';
+// Rampa semântica de "qualidade do match" (dark): neutro → âmbar → verde.
+const SCORE_COLORS = ['#6b7280', '#d97706', '#f59e0b', '#22c55e', '#34d399'];
+const GRID = '#242835';
+const AXIS = '#6c7280';
 
 const tickStyle = { fontSize: 12, fill: AXIS } as const;
 const tooltipStyle = {
-  borderRadius: 8,
-  border: '1px solid rgba(17,20,28,0.1)',
-  boxShadow: '0 6px 16px rgba(16,24,40,0.08)',
+  background: '#1a1d26',
+  border: '1px solid rgba(255,255,255,0.1)',
+  borderRadius: 10,
+  boxShadow: '0 10px 30px rgba(0,0,0,0.4)',
   fontSize: 13,
 } as const;
+const cursorFill = { fill: 'rgba(109,118,245,0.1)' } as const;
+const labelStyle = { color: '#eceef3' } as const;
+
+function AccentGradient({ id }: { id: string }) {
+  return (
+    <defs>
+      <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stopColor="#7c84f7" />
+        <stop offset="100%" stopColor="#a568f0" />
+      </linearGradient>
+    </defs>
+  );
+}
 
 export function Analytics() {
   const [stats, setStats] = useState<Stats | null>(null);
@@ -64,14 +77,14 @@ export function Analytics() {
       <div className="chart">
         <h3>Vagas por faixa de score</h3>
         <ResponsiveContainer width="100%" height={220}>
-          <BarChart data={stats.byScoreBucket} margin={{ top: 4, right: 8, bottom: 0, left: -16 }}>
+          <BarChart data={stats.byScoreBucket} margin={{ top: 6, right: 8, bottom: 0, left: -14 }}>
             <CartesianGrid vertical={false} stroke={GRID} />
             <XAxis dataKey="bucket" tick={tickStyle} axisLine={false} tickLine={false} />
             <YAxis tick={tickStyle} axisLine={false} tickLine={false} allowDecimals={false} />
-            <Tooltip contentStyle={tooltipStyle} cursor={{ fill: 'rgba(42,120,214,0.06)' }} />
-            <Bar dataKey="count" radius={[6, 6, 0, 0]} maxBarSize={64}>
+            <Tooltip contentStyle={tooltipStyle} labelStyle={labelStyle} cursor={cursorFill} />
+            <Bar dataKey="count" radius={[6, 6, 0, 0]} maxBarSize={70}>
               {stats.byScoreBucket.map((entry, i) => (
-                <Cell key={entry.bucket} fill={SCORE_COLORS[i % SCORE_COLORS.length] ?? ACCENT} />
+                <Cell key={entry.bucket} fill={SCORE_COLORS[i % SCORE_COLORS.length] ?? AXIS} />
               ))}
             </Bar>
           </BarChart>
@@ -86,18 +99,25 @@ export function Analytics() {
             layout="vertical"
             margin={{ top: 4, right: 12, bottom: 0, left: 8 }}
           >
+            <AccentGradient id="grad-source" />
             <CartesianGrid horizontal={false} stroke={GRID} />
-            <XAxis type="number" tick={tickStyle} axisLine={false} tickLine={false} allowDecimals={false} />
+            <XAxis
+              type="number"
+              tick={tickStyle}
+              axisLine={false}
+              tickLine={false}
+              allowDecimals={false}
+            />
             <YAxis
               type="category"
               dataKey="source"
               tick={tickStyle}
               axisLine={false}
               tickLine={false}
-              width={90}
+              width={92}
             />
-            <Tooltip contentStyle={tooltipStyle} cursor={{ fill: 'rgba(42,120,214,0.06)' }} />
-            <Bar dataKey="count" fill={ACCENT} radius={[0, 6, 6, 0]} maxBarSize={40} />
+            <Tooltip contentStyle={tooltipStyle} labelStyle={labelStyle} cursor={cursorFill} />
+            <Bar dataKey="count" fill="url(#grad-source)" radius={[0, 6, 6, 0]} maxBarSize={38} />
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -105,12 +125,13 @@ export function Analytics() {
       <div className="chart">
         <h3>Vagas vistas por dia</h3>
         <ResponsiveContainer width="100%" height={200}>
-          <BarChart data={stats.byDay} margin={{ top: 4, right: 8, bottom: 0, left: -16 }}>
+          <BarChart data={stats.byDay} margin={{ top: 6, right: 8, bottom: 0, left: -14 }}>
+            <AccentGradient id="grad-day" />
             <CartesianGrid vertical={false} stroke={GRID} />
             <XAxis dataKey="date" tick={tickStyle} axisLine={false} tickLine={false} />
             <YAxis tick={tickStyle} axisLine={false} tickLine={false} allowDecimals={false} />
-            <Tooltip contentStyle={tooltipStyle} cursor={{ fill: 'rgba(42,120,214,0.06)' }} />
-            <Bar dataKey="count" fill={ACCENT} radius={[6, 6, 0, 0]} maxBarSize={48} />
+            <Tooltip contentStyle={tooltipStyle} labelStyle={labelStyle} cursor={cursorFill} />
+            <Bar dataKey="count" fill="url(#grad-day)" radius={[6, 6, 0, 0]} maxBarSize={54} />
           </BarChart>
         </ResponsiveContainer>
       </div>
