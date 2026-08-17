@@ -16,6 +16,33 @@ describe('GET /health', () => {
   });
 });
 
+describe('CORS', () => {
+  it('reflete a origem na resposta', async () => {
+    const response = await app.inject({
+      method: 'GET',
+      url: '/health',
+      headers: { origin: 'http://localhost:5173' },
+    });
+
+    expect(response.headers['access-control-allow-origin']).toBe('http://localhost:5173');
+  });
+
+  it('permite PUT no preflight (necessário para salvar o perfil)', async () => {
+    const response = await app.inject({
+      method: 'OPTIONS',
+      url: '/profile',
+      headers: {
+        origin: 'http://localhost:5173',
+        'access-control-request-method': 'PUT',
+        'access-control-request-headers': 'content-type',
+      },
+    });
+
+    expect(response.statusCode).toBe(204);
+    expect(response.headers['access-control-allow-methods']).toContain('PUT');
+  });
+});
+
 describe('OpenAPI (Swagger)', () => {
   it('expõe o spec com as rotas de vagas', async () => {
     const response = await app.inject({ method: 'GET', url: '/docs/json' });

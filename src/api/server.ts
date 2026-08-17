@@ -1,3 +1,4 @@
+import fastifyCors from '@fastify/cors';
 import fastifySwagger from '@fastify/swagger';
 import fastifySwaggerUi from '@fastify/swagger-ui';
 import Fastify from 'fastify';
@@ -8,7 +9,9 @@ import {
 } from 'fastify-type-provider-zod';
 import { logger } from '../logger.js';
 import { jobRoutes } from './routes/jobs.js';
+import { profileRoutes } from './routes/profile.js';
 import { sourceRoutes } from './routes/sources.js';
+import { statsRoutes } from './routes/stats.js';
 
 /**
  * Constrói a instância do Fastify com as rotas registradas.
@@ -19,6 +22,13 @@ import { sourceRoutes } from './routes/sources.js';
  */
 export function buildApp() {
   const app = Fastify({ loggerInstance: logger });
+
+  // CORS para o dashboard consumir a API do browser.
+  // CORS_ORIGIN define a origem permitida; sem ela, reflete qualquer origem (dev).
+  app.register(fastifyCors, {
+    origin: process.env['CORS_ORIGIN'] ?? true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  });
 
   // Validação de request via zod (reaproveita nossos schemas).
   app.setValidatorCompiler(validatorCompiler);
@@ -37,6 +47,8 @@ export function buildApp() {
   app.get('/health', () => ({ status: 'ok' }));
   app.register(jobRoutes);
   app.register(sourceRoutes);
+  app.register(profileRoutes);
+  app.register(statsRoutes);
 
   return app;
 }

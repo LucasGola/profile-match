@@ -1,0 +1,82 @@
+:root {
+  color-scheme: dark;
+
+  /* Superfícies (dark) */
+  --bg: #0a0b0f;
+  --surface: #14161d;
+  --surface-2: #1a1d26;
+  --surface-3: #21242f;
+
+  /* Bordas / sombras */
+  --border: rgba(255, 255, 255, 0.07);
+  --border-2: rgba(255, 255, 255, 0.12);
+  --shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+
+  /* Texto */
+  --text: #eceef3;
+  --text-2: #a7adba;
+  --muted: #6c7280;
+
+  /* Acento (indigo → violeta) */
+  --accent: #6d76f5;
+  --accent-2: #a568f0;
+  --accent-soft: rgba(109, 118, 245, 0.14);
+  --grad: linear-gradient(135deg, #6d76f5 0%, #a568f0 100%);
+
+  /* Semânticos */
+  --good: #34d399;
+  --amber: #fbbf24;
+  --neutral: #7c8496;
+
+  --radius: 14px;
+  --radius-sm: 10px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(900px 500px at 12% -8%, rgba(109, 118, 245, 0.16), transparent 60%),
+    radial-gradient(760px 460px at 100% 0%, rgba(165, 104, 240, 0.12), transparent 55%), var(--bg);
+  background-attachment: fixed;
+  color: var(--text);
+  font-family:
+    'Inter',
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+}
+a:hover {
+  color: var(--accent-2);
+}
+
+button {
+  font-family: inherit;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--surface-3);
+  border-radius: 8px;
+}

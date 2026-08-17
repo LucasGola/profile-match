@@ -160,6 +160,48 @@ export async function listSources() {
   return prisma.source.findMany({ orderBy: { slug: 'asc' } });
 }
 
+const SCORE_BUCKETS = [
+  { bucket: '0-19', min: 0, max: 20 },
+  { bucket: '20-39', min: 20, max: 40 },
+  { bucket: '40-59', min: 40, max: 60 },
+  { bucket: '60-79', min: 60, max: 80 },
+  { bucket: '80-100', min: 80, max: 101 },
+];
+
+/** Agregações para os gráficos do dashboard (tudo calculado no servidor). */
+export async function getStats() {
+  const [total, notified, sources, dayRows] = await Promise.all([
+    prisma.job.count(),
+    prisma.job.count({ where: { notifiedAt: { not: null } } }),
+    prisma.source.findMany({
+      select: { slug: true, _count: { select: { jobs: true } } },
+      orderBy: { slug: 'asc' },
+    }),
+    prisma.job.findMany({ select: { firstSeenAt: true } }),
+  ]);
+
+  const byScoreBucket = await Promise.all(
+    SCORE_BUCKETS.map(async ({ bucket, min, max }) => ({
+      bucket,
+      count: await prisma.job.count({ where: { score: { gte: min, lt: max } } }),
+    })),
+  );
+
+  const bySource = sources.map((source) => ({ source: source.slug, count: source._count.jobs }));
+
+  // Agrupa por dia (YYYY-MM-DD) a partir do firstSeenAt.
+  const byDayMap = new Map<string, number>();
+  for (const { firstSeenAt } of dayRows) {
+    const day = firstSeenAt.toISOString().slice(0, 10);
+    byDayMap.set(day, (byDayMap.get(day) ?? 0) + 1);
+  }
+  const byDay = [...byDayMap.entries()]
+    .map(([date, count]) => ({ date, count }))
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  return { total, notified, byScoreBucket, bySource, byDay };
+}
+
 /**
  * Vagas elegíveis para notificação: score ≥ limiar e ainda não notificadas,
  * das melhores para as piores.
